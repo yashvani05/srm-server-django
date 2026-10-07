@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.js": { "maxDuration": 30, "includeFiles": "dist/**" }
+  },
+  "crons": [{ "path": "/api/v1/internal/cron/overdue-check", "schedule": "0 4 * * *" }]
+}

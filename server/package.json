@@ -1,0 +1,58 @@
+{
+  "name": "srm-server",
+  "version": "1.0.0",
+  "description": "Service Request Management API",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
+    "db:seed": "sequelize-cli db:seed:all",
+    "worker": "tsx src/worker.ts",
+    "worker:dev": "tsx watch src/worker.ts",
+    "start:worker": "node dist/worker.js",
+    "overdue:check": "tsx src/jobs/overdue/run-once.ts"
+  },
+  "type": "commonjs",
+  "private": true,
+  "dependencies": {
+    "@bull-board/api": "^9.10.4",
+    "@bull-board/express": "^9.10.4",
+    "bcrypt": "^6.0.0",
+    "bullmq": "^6.3.11",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
+    "joi": "^18.2.9",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "pg-hstore": "^2.3.4",
+    "pino": "^10.4.0",
+    "pino-pretty": "^13.2.0",
+    "sequelize": "^6.37.8",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.4",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "sequelize-cli": "^6.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

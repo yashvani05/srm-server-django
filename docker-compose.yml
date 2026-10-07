@@ -1,0 +1,53 @@
+# Redis is required (dashboard cache, JWT denylist, BullMQ). PostgreSQL is expected
+# to run locally; the optional "postgres" service is only for machines without it:
+#   docker compose --profile with-db up -d
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: srm-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Optional visual tool for exploring Redis (keys, values, countdown timers):
+  #   docker compose --profile tools up -d redisinsight   ->   http://localhost:5540
+  # In RedisInsight choose "Add Redis database" and use host `redis`, port 6379.
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: srm-redisinsight
+    profiles: ["tools"]
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      - redis
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: srm-postgres
+    profiles: ["with-db"]
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-service_requests}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  redis_data:
+  postgres_data:
+  redisinsight_data:

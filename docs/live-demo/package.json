@@ -1,0 +1,18 @@
+{
+  "name": "redis-bullmq-live-demo",
+  "private": true,
+  "description": "A tiny stand-alone demo of Redis caching and a BullMQ queue/worker, with the Bull Board web UI.",
+  "scripts": {
+    "cache": "node cache-demo.js",
+    "worker": "node worker.js",
+    "board": "node board.js",
+    "add": "node add-jobs.js"
+  },
+  "dependencies": {
+    "@bull-board/api": "^9.10.4",
+    "@bull-board/express": "^9.10.4",
+    "bullmq": "^6.3.11",
+    "express": "^5.2.1",
+    "ioredis": "^6.0.0"
+  }
+}

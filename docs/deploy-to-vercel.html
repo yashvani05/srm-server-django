@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploy to Vercel, Step by Step</title>
+<style>
+  :root { --bg:#f8f9fb; --card:#fff; --text:#1b2230; --muted:#5b6577; --line:#e3e7ee; --accent:#c62828; --accent-soft:#fdecec; --code-bg:#0f1623; --code-text:#e6ebf5; --blue:#0369a1; --blue-soft:#e6f3fb; --green:#15803d; --green-soft:#e6f6ec; --amber:#b45309; --amber-soft:#fdf3e1; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0e131d; --card:#151c29; --text:#e8ecf4; --muted:#9aa5b8; --line:#263045; --accent:#ef5350; --accent-soft:#3a1c1f; --code-bg:#0a0f18; --blue:#7dc4f0; --blue-soft:#14293a; --green:#4ade80; --green-soft:#15301f; --amber:#fbbf24; --amber-soft:#3a2d12; } }
+  * { box-sizing: border-box; } html { scroll-behavior: smooth; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; }
+  .layout { display:grid; grid-template-columns:1fr; max-width:1100px; margin:0 auto; padding:0 16px 80px; gap:32px; }
+  @media (min-width:1000px) { .layout { grid-template-columns:230px minmax(0,1fr); } }
+  nav.toc { display:none; } @media (min-width:1000px) { nav.toc { display:block; position:sticky; top:24px; align-self:start; padding-top:56px; font-size:14px; } }
+  nav.toc a { display:block; padding:6px 10px; color:var(--muted); text-decoration:none; border-left:2px solid var(--line); } nav.toc a:hover { color:var(--text); border-left-color:var(--accent); }
+  header.hero { grid-column:1/-1; padding:48px 0 8px; } header.hero .tag { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+  header.hero h1 { font-size:clamp(28px,4vw,40px); line-height:1.15; margin:8px 0 12px; } header.hero p { color:var(--muted); max-width:720px; margin:0; font-size:18px; }
+  main { min-width:0; } section { padding-top:44px; } h2 { font-size:25px; margin:0 0 4px; line-height:1.25; } h2 .num { color:var(--accent); margin-right:8px; }
+  h3 { font-size:17px; margin:26px 0 8px; } p { margin:10px 0; } .lead { color:var(--muted); font-size:17px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; } .grid { display:grid; gap:14px; } .g2 { grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--blue-soft); color:var(--blue); } .pill.red { background:var(--accent-soft); color:var(--accent); } .pill.green { background:var(--green-soft); color:var(--green); } .pill.amber { background:var(--amber-soft); color:var(--amber); }
+  .callout { border-left:4px solid var(--accent); background:var(--accent-soft); padding:14px 18px; border-radius:0 10px 10px 0; margin:18px 0; } .callout.blue { border-left-color:var(--blue); background:var(--blue-soft); } .callout.green { border-left-color:var(--green); background:var(--green-soft); } .callout.amber { border-left-color:var(--amber); background:var(--amber-soft); } .callout strong:first-child { display:block; margin-bottom:2px; }
+  code { font:13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; background:var(--blue-soft); padding:1px 6px; border-radius:5px; overflow-wrap:anywhere; }
+  .code { position:relative; margin:14px 0; } .code pre { margin:0; background:var(--code-bg); color:var(--code-text); padding:16px 18px; border-radius:10px; overflow-x:auto; font:13.5px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; } .code .c { color:#8fa1c0; }
+  .copy { position:absolute; top:8px; right:8px; font:12px/1 inherit; background:#263045; color:#dbe3f2; border:0; border-radius:6px; padding:6px 10px; cursor:pointer; } .copy:hover { background:#34425e; }
+  .copy:focus-visible, summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  table { width:100%; border-collapse:collapse; font-size:15px; margin:12px 0; display:block; overflow-x:auto; } th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; } td:first-child { white-space:nowrap; }
+  ol.steps { list-style:none; counter-reset:s; padding:0; margin:14px 0; } ol.steps > li { counter-increment:s; position:relative; padding:4px 0 16px 46px; } ol.steps > li::before { content:counter(s); position:absolute; left:0; top:2px; width:30px; height:30px; border-radius:50%; background:var(--accent); color:#fff; font-weight:700; font-size:14px; display:grid; place-items:center; } ol.steps > li::after { content:""; position:absolute; left:14px; top:34px; bottom:2px; width:2px; background:var(--line); } ol.steps > li:last-child::after { display:none; }
+  details { background:var(--card); border:1px solid var(--line); border-radius:10px; margin:10px 0; } summary { cursor:pointer; padding:14px 18px; font-weight:600; list-style:none; display:flex; justify-content:space-between; gap:12px; } summary::after { content:"+"; color:var(--accent); font-size:20px; line-height:1; } details[open] summary::after { content:"−"; } details > div { padding:0 18px 14px; color:var(--muted); }
+  svg { max-width:100%; height:auto; } svg text { font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; fill:var(--text); } svg .box { fill:var(--card); stroke:var(--line); stroke-width:1.5; } svg .hot { fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5; } svg .cool { fill:var(--blue-soft); stroke:var(--blue); stroke-width:1.5; } svg .ok { fill:var(--green-soft); stroke:var(--green); stroke-width:1.5; } svg .small { font-size:11px; fill:var(--muted); } svg .arrow { stroke:var(--muted); stroke-width:1.6; fill:none; marker-end:url(#ah); } svg .dash { stroke-dasharray:5 4; }
+  footer { grid-column:1/-1; color:var(--muted); font-size:14px; border-top:1px solid var(--line); padding-top:20px; margin-top:40px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<header class="hero">
+  <span class="tag">Deployment guide · Service Request Management</span>
+  <h1>Deploy to Vercel, step by step</h1>
+  <p>Put the website and the API online. About 30 minutes, no credit card. Every setting you need is on this page.</p>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <a href="#plan">1. The plan</a><a href="#github">2. Code on GitHub</a><a href="#neon">3. Database (Neon)</a><a href="#upstash">4. Redis (Upstash)</a>
+  <a href="#api">5. Deploy the API</a><a href="#web">6. Deploy the website</a><a href="#link">7. Connect them</a><a href="#test">8. Test it</a>
+  <a href="#overdue">9. The overdue check</a><a href="#secure">10. Security checklist</a><a href="#trouble">11. If something fails</a>
+</nav>
+
+<main>
+
+<section id="plan">
+  <h2><span class="num">1</span>The plan, and why it is not "everything on Vercel"</h2>
+  <p class="lead">Vercel runs your code as short-lived <b>functions</b>: they start when a request arrives and stop right after. That is perfect for a website and an API, but it means Vercel has <b>no database, no Redis, and cannot keep a worker running</b>.</p>
+  <svg viewBox="0 0 780 250" role="img" aria-label="Browser to Vercel web app to Vercel API, which uses Neon PostgreSQL and Upstash Redis; a scheduler calls the API's cron endpoint">
+    <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#8a94a6"/></marker></defs>
+    <rect class="box" x="10" y="20" width="110" height="52" rx="10"/><text x="65" y="44" text-anchor="middle" font-weight="600">Browser</text><text x="65" y="60" text-anchor="middle" class="small">you / the client</text>
+    <path class="arrow" d="M120,46 L170,46"/>
+    <rect class="cool" x="170" y="14" width="170" height="64" rx="10"/><text x="255" y="40" text-anchor="middle" font-weight="600">Vercel project 1: Web</text><text x="255" y="58" text-anchor="middle" class="small">React app · folder client/</text>
+    <path class="arrow" d="M340,46 L400,46"/><text x="370" y="38" text-anchor="middle" class="small">calls</text>
+    <rect class="cool" x="400" y="14" width="180" height="64" rx="10"/><text x="490" y="40" text-anchor="middle" font-weight="600">Vercel project 2: API</text><text x="490" y="58" text-anchor="middle" class="small">Express · folder server/</text>
+    <path class="arrow" d="M450,78 L450,130 L330,130 L330,150"/>
+    <path class="arrow" d="M530,78 L530,130 L640,130 L640,150"/>
+    <rect class="ok" x="215" y="150" width="230" height="64" rx="10"/><text x="330" y="176" text-anchor="middle" font-weight="600">Neon</text><text x="330" y="194" text-anchor="middle" class="small">hosted PostgreSQL (your data)</text>
+    <rect class="hot" x="525" y="150" width="230" height="64" rx="10"/><text x="640" y="176" text-anchor="middle" font-weight="600">Upstash</text><text x="640" y="194" text-anchor="middle" class="small">hosted Redis (cache + logout list)</text>
+    <rect class="box dash" x="620" y="14" width="150" height="64" rx="10"/><text x="695" y="40" text-anchor="middle" font-weight="600">Scheduler</text><text x="695" y="58" text-anchor="middle" class="small">Vercel Cron / free pinger</text>
+    <path class="arrow dash" d="M620,46 L580,46"/>
+  </svg>
+  <div class="callout amber"><strong>About the worker</strong>Our BullMQ worker must stay running, which Vercel cannot do. So on Vercel the overdue check runs as a <b>Vercel Cron Job every 24 hours</b> (section 9). The BullMQ worker code is unchanged and can run on any always-on host if you want faster checks later.</div>
+  <div class="callout blue"><strong>Honest note</strong>I tested all of this by running the API exactly the way Vercel runs it (as a function, in production mode, with only hosted-style settings), and by building the website the way Vercel will. I cannot log in to your accounts, so the first real deploy is yours. Section 11 covers the usual first-time problems.</div>
+
+  <h3>Accounts you need (all free)</h3>
+  <div class="grid g2">
+    <div class="card"><span class="pill">GitHub</span><p>Holds your code. Vercel deploys from it.</p></div>
+    <div class="card"><span class="pill">Vercel</span><p>Runs the website and the API. Sign up with your GitHub account.</p></div>
+    <div class="card"><span class="pill green">Neon</span><p>Hosted PostgreSQL. <code>neon.tech</code></p></div>
+    <div class="card"><span class="pill red">Upstash</span><p>Hosted Redis. <code>upstash.com</code></p></div>
+  </div>
+</section>
+
+<section id="github">
+  <h2><span class="num">2</span>Put the code on GitHub</h2>
+  <p class="lead">Vercel pulls your code from GitHub. Create an empty repository on github.com (no README, no .gitignore), then in your project folder:</p>
+  <div class="code"><button class="copy" data-copy="git add -A&#10;git commit -m &quot;Service Request Management System&quot;&#10;git branch -M main&#10;git remote add origin https://github.com/YOUR-NAME/YOUR-REPO.git&#10;git push -u origin main">Copy</button><pre>git add -A
+git commit -m "Service Request Management System"
+git branch -M main
+git remote add origin https://github.com/YOUR-NAME/YOUR-REPO.git   <span class="c"># use the address GitHub shows you</span>
+git push -u origin main</pre></div>
+  <div class="callout green"><strong>Safe by default</strong>The <code>.gitignore</code> already keeps <code>.env</code> files and <code>node_modules</code> out, so your passwords are not uploaded. Never remove those lines.</div>
+</section>
+
+<section id="neon">
+  <h2><span class="num">3</span>Create the database (Neon)</h2>
+  <ol class="steps">
+    <li>On <b>neon.tech</b> create a project. Pick a region close to you (the same continent as Vercel's default is fine).</li>
+    <li>Open <b>Connection details</b>. Turn <b>Pooled connection</b> ON and copy the connection string. It looks like <code>postgresql://user:pass@ep-xxxx-pooler.region.aws.neon.tech/neondb</code>.<br>
+      <b>Paste it without anything after the <code>?</code></b> (we turn on encryption with a separate setting).</li>
+    <li>Create the tables and starting data from <b>your laptop</b>. Vercel never runs migrations. In the <code>server</code> folder:
+      <div class="code"><button class="copy" data-copy="cd server&#10;export DATABASE_URL='PASTE-THE-NEON-URL-HERE'&#10;export DB_SSL=true&#10;npm run db:migrate&#10;SEED_ADMIN_EMAIL='you@yourcompany.com' SEED_ADMIN_PASSWORD='a-strong-password-1' SEED_EMPLOYEE_PASSWORD='another-strong-password-2' npm run db:seed">Copy</button><pre>cd server
+export DATABASE_URL='PASTE-THE-NEON-URL-HERE'
+export DB_SSL=true
+npm run db:migrate      <span class="c"># creates all tables</span>
+SEED_ADMIN_EMAIL='you@yourcompany.com' \
+SEED_ADMIN_PASSWORD='a-strong-password-1' \
+SEED_EMPLOYEE_PASSWORD='another-strong-password-2' \
+npm run db:seed         <span class="c"># roles, permissions, 2 demo users, 12 sample requests</span></pre></div>
+      You should see <code>migrated</code> lines and no errors. <b>Choose your own passwords here</b>: this database will be public.</li>
+  </ol>
+</section>
+
+<section id="upstash">
+  <h2><span class="num">4</span>Create Redis (Upstash)</h2>
+  <ol class="steps">
+    <li>On <b>upstash.com</b> choose <b>Create database</b> (Redis). Pick the region closest to your Vercel region, and keep TLS on (default).</li>
+    <li>On the database page find the <b>TCP / ioredis</b> connection string. It starts with <code>rediss://</code> (two s's, meaning encrypted) and looks like <code>rediss://default:PASSWORD@xxxx.upstash.io:6379</code>. Copy it.</li>
+  </ol>
+  <div class="callout amber"><strong>Free tier limit</strong>Upstash counts commands. Our cache, logout list and overdue check use very few. A worker that polls all day would use many, which is another reason the Vercel setup has no always-on worker.</div>
+</section>
+
+<section id="api">
+  <h2><span class="num">5</span>Deploy the API (Vercel project 1)</h2>
+  <ol class="steps">
+    <li>On <b>vercel.com</b>: <b>Add New → Project</b>, and import your GitHub repository.</li>
+    <li>Set <b>Root Directory</b> to <code>server</code> (click <i>Edit</i> next to it). Framework Preset: <b>Other</b>. Leave the build settings as they are: <code>server/vercel.json</code> already tells Vercel what to do.</li>
+    <li>Open <b>Environment Variables</b>. You can paste this whole block into the first field and Vercel splits it into rows. <b>Replace every value that starts with <code>PASTE</code> or <code>MAKE-UP</code>.</b>
+      <div class="code"><button class="copy" data-copy="NODE_ENV=production&#10;DATABASE_URL=PASTE-THE-NEON-URL&#10;DB_SSL=true&#10;DB_POOL_MAX=2&#10;REDIS_URL=PASTE-THE-UPSTASH-rediss-URL&#10;JWT_SECRET=MAKE-UP-A-LONG-RANDOM-STRING&#10;JWT_EXPIRES_IN=1h&#10;CORS_ORIGIN=https://temporary.example.com&#10;SWAGGER_USER=apidocs&#10;SWAGGER_PASS=MAKE-UP-A-STRONG-PASSWORD&#10;TRUST_PROXY=1&#10;ENABLE_BULL_BOARD=false&#10;CRON_SECRET=MAKE-UP-ANOTHER-LONG-RANDOM-STRING">Copy</button><pre>NODE_ENV=production
+DATABASE_URL=PASTE-THE-NEON-URL
+DB_SSL=true
+DB_POOL_MAX=2
+REDIS_URL=PASTE-THE-UPSTASH-rediss-URL
+JWT_SECRET=MAKE-UP-A-LONG-RANDOM-STRING
+JWT_EXPIRES_IN=1h
+CORS_ORIGIN=https://temporary.example.com      <span class="c"># we fix this in step 7</span>
+SWAGGER_USER=apidocs
+SWAGGER_PASS=MAKE-UP-A-STRONG-PASSWORD
+TRUST_PROXY=1
+ENABLE_BULL_BOARD=false
+CRON_SECRET=MAKE-UP-ANOTHER-LONG-RANDOM-STRING</pre></div>
+      To make a strong random value, run <code>openssl rand -base64 32</code> in a terminal.</li>
+    <li>Click <b>Deploy</b>. When it finishes, copy the address Vercel gives you, for example <code>https://my-api.vercel.app</code>.</li>
+    <li>Check it: open <code>https://my-api.vercel.app/api/v1/health</code>. You should see <code>"status":"ok"</code>. Then <code>/api-docs</code> asks for your docs user and password.</li>
+  </ol>
+</section>
+
+<section id="web">
+  <h2><span class="num">6</span>Deploy the website (Vercel project 2)</h2>
+  <ol class="steps">
+    <li><b>Add New → Project</b> again, import the <b>same repository</b>.</li>
+    <li>Set <b>Root Directory</b> to <code>client</code>. Vercel detects <b>Vite</b> by itself.</li>
+    <li>Add one environment variable, using the API address from step 5:
+      <div class="code"><button class="copy" data-copy="VITE_API_BASE_URL=https://my-api.vercel.app/api/v1">Copy</button><pre>VITE_API_BASE_URL=https://my-api.vercel.app/api/v1     <span class="c"># your API address + /api/v1</span></pre></div></li>
+    <li><b>Deploy</b>, then copy the website address, for example <code>https://my-web.vercel.app</code>.</li>
+  </ol>
+  <div class="callout"><strong>Important Vite rule</strong>The website bakes this address in <i>when it is built</i>. If you ever change <code>VITE_API_BASE_URL</code>, you must <b>Redeploy</b> the website for the change to take effect.</div>
+</section>
+
+<section id="link">
+  <h2><span class="num">7</span>Connect them</h2>
+  <p class="lead">The API only accepts requests from the website's address. Tell it what that is.</p>
+  <ol class="steps">
+    <li>Open the <b>API project → Settings → Environment Variables</b>.</li>
+    <li>Edit <code>CORS_ORIGIN</code> to your website address with <b>no slash at the end</b>: <code>https://my-web.vercel.app</code>.</li>
+    <li>Go to <b>Deployments</b> → the latest one → <b>⋯ → Redeploy</b>. (Environment variable changes only apply to new deployments.)</li>
+  </ol>
+</section>
+
+<section id="test">
+  <h2><span class="num">8</span>Test it</h2>
+  <table>
+    <tr><th>Do this</th><th>You should see</th></tr>
+    <tr><td>Open the website address</td><td>The light landing page with the sign-in card</td></tr>
+    <tr><td>Sign in with the admin email and password you chose in step 3</td><td>The dashboard with its six cards</td></tr>
+    <tr><td>Create a request, then open the dashboard</td><td>The totals changed (the cache was cleared and refilled)</td></tr>
+    <tr><td>Refresh a deep page such as <code>/requests</code></td><td>It still loads (no 404)</td></tr>
+    <tr><td>Open <code>API address/api-docs</code></td><td>A browser password prompt, then Swagger</td></tr>
+    <tr><td>API project → Settings → Cron Jobs → <b>Run</b>, then open the dashboard</td><td>The Overdue card says "checked just now"</td></tr>
+    <tr><td>Sign out, then try the old token in Swagger</td><td>401 "Token has been revoked" (Redis is working)</td></tr>
+  </table>
+</section>
+
+<section id="overdue">
+  <h2><span class="num">9</span>The overdue check: a cron job every 24 hours</h2>
+  <p class="lead">Vercel cannot keep our worker running, so the overdue check runs as a <b>Vercel Cron Job once a day</b>. It is already set up in the code. The only thing you add is <code>CRON_SECRET</code> (it is in the settings block in step 5).</p>
+  <ol class="steps">
+    <li><code>server/vercel.json</code> contains a cron entry: <code>"schedule": "0 4 * * *"</code>. Every day at <b>04:00 UTC</b> (that is <b>06:00 in South Africa</b>, before the working day) Vercel calls <code>/api/v1/internal/cron/overdue-check</code> on your API.</li>
+    <li>Vercel adds the header <code>Authorization: Bearer YOUR-CRON-SECRET</code> by itself, because you set <code>CRON_SECRET</code>. The API refuses anyone without it (and the address does not exist at all if the secret is not set).</li>
+    <li>The API runs the <b>same check our worker runs</b>: it flags requests that have been Open or In Progress for more than 24 hours, clears any flag that should not be there (a resolved request is never overdue), saves the time it ran, and refreshes the dashboard numbers.</li>
+  </ol>
+  <div class="callout amber"><strong>What "once every 24 hours" means in practice</strong>Flags are updated once a day, not the moment a request turns 24 hours old. A request that passes 24 hours at 05:00 is flagged at the next 04:00 run, so up to about a day late. The dashboard's Overdue card always tells the truth about this: it says <i>"checked 7h ago"</i>. Marking a request <b>Resolved</b> or changing its status still clears its overdue flag <b>immediately</b>, with no waiting for the cron.</div>
+  <h3>Check that it works</h3>
+  <ul>
+    <li>In Vercel open the <b>API project → Settings → Cron Jobs</b>. You will see the job listed. Click <b>Run</b> to fire it now.</li>
+    <li>Then open the website dashboard: the Overdue card should say <i>checked just now</i>.</li>
+    <li>Or from a terminal:
+      <div class="code"><button class="copy" data-copy="curl -H &quot;Authorization: Bearer YOUR-CRON-SECRET&quot; https://my-api.vercel.app/api/v1/internal/cron/overdue-check">Copy</button><pre>curl -H "Authorization: Bearer YOUR-CRON-SECRET" https://my-api.vercel.app/api/v1/internal/cron/overdue-check
+<span class="c"># {"success":true,"message":"Overdue check completed","data":{"marked":0,"cleared":0,"durationMs":12}}</span></pre></div></li>
+  </ul>
+  <h3>Change the time of day</h3>
+  <p>Edit the schedule in <code>server/vercel.json</code> and push. Times are in UTC, and South Africa is UTC+2. For example <code>0 22 * * *</code> runs at 00:00 in South Africa. Free (Hobby) Vercel accounts can run a cron job <b>at most once a day</b>, so keep it a daily schedule.</p>
+  <h3>Want fresher flags later? (all optional)</h3>
+  <div class="grid g2">
+    <div class="card"><span class="pill amber">Free</span><h3 style="margin-top:10px">Check when people look</h3><p>Add the setting <code>OVERDUE_ON_DEMAND_SECONDS=60</code> to the API project and redeploy. Then opening the dashboard or the list also runs the check if the last one is over a minute old.</p></div>
+    <div class="card"><span class="pill amber">Free</span><h3 style="margin-top:10px">External scheduler</h3><p>A service such as <code>cron-job.org</code> can call the same address every few minutes with the header <code>Authorization: Bearer YOUR-CRON-SECRET</code>.</p></div>
+    <div class="card"><span class="pill amber">Paid</span><h3 style="margin-top:10px">Vercel Pro</h3><p>Change the schedule to <code>* * * * *</code> to run it every minute.</p></div>
+    <div class="card"><span class="pill amber">Own server</span><h3 style="margin-top:10px">The BullMQ worker</h3><p>Run <code>npm run build &amp;&amp; npm run start:worker</code> in <code>server/</code> on any always-on host, with the same <code>DATABASE_URL</code> and <code>REDIS_URL</code>.</p></div>
+  </div>
+</section>
+
+<section id="secure">
+  <h2><span class="num">10</span>Security checklist before sharing the link</h2>
+  <div class="callout"><strong>Your site is now on the public internet.</strong> Go through these.</div>
+  <ul>
+    <li><b>Demo passwords.</b> Step 3 used your own passwords. If you ever seed with defaults, <code>admin@company.com / Admin@12345</code> becomes a public admin login.</li>
+    <li><b>Strong secrets.</b> <code>JWT_SECRET</code>, <code>SWAGGER_PASS</code> and <code>CRON_SECRET</code> must be long and random, and never committed to GitHub.</li>
+    <li><b>API docs.</b> They are behind a password. Keep it private.</li>
+    <li><b>Public sign-up.</b> Anyone can register as an employee. That is how the app is designed, but know it before sharing widely.</li>
+    <li><b>Login rate limit.</b> It counts per client IP inside each function instance on Vercel, so treat it as a speed bump, not a wall.</li>
+  </ul>
+</section>
+
+<section id="trouble">
+  <h2><span class="num">11</span>If something fails</h2>
+  <p class="lead">First look: Vercel → your project → <b>Logs</b> (or Deployments → the deployment → Functions). The error message is almost always there.</p>
+  <details><summary>The API shows a 500 / "Invalid environment configuration"</summary><div>A required setting is missing or malformed. The log names it. Common ones: <code>JWT_SECRET</code> shorter than 16 characters, <code>SWAGGER_PASS</code> missing (required in production), a <code>DATABASE_URL</code> that is not a valid <code>postgres://</code> address.</div></details>
+  <details><summary>Cannot connect to the database / SSL errors</summary><div>Make sure <code>DB_SSL=true</code>, and that the Neon address has nothing after <code>?</code>. Use the <b>pooled</b> connection string. If you see "too many connections", keep <code>DB_POOL_MAX=2</code>.</div></details>
+  <details><summary>"relation ... does not exist"</summary><div>The migrations were not run on this database. Repeat step 3 against the same <code>DATABASE_URL</code> you gave Vercel.</div></details>
+  <details><summary>Every logged-in request gives 503</summary><div>The API cannot reach Redis (it refuses to guess whether a token was logged out). Check <code>REDIS_URL</code>: it must start with <code>rediss://</code> and include the password.</div></details>
+  <details><summary>The browser console says "blocked by CORS"</summary><div><code>CORS_ORIGIN</code> must equal the website address exactly: <code>https://</code>, no trailing slash, no path. Fix it and <b>Redeploy the API</b>.</div></details>
+  <details><summary>The website loads but login does nothing, or the page is blank</summary><div><code>VITE_API_BASE_URL</code> is missing or wrong on the <b>website</b> project. Set it, then <b>Redeploy the website</b> (it is baked in at build time).</div></details>
+  <details><summary>A page refresh gives 404</summary><div>The website's <code>client/vercel.json</code> must be present with the rewrite rule. Check the website project's Root Directory is <code>client</code>.</div></details>
+  <details><summary>Vercel says "No Output Directory named public found"</summary><div>The API project's Root Directory must be <code>server</code>, so Vercel sees <code>server/vercel.json</code> and the <code>server/public</code> folder.</div></details>
+  <details><summary>The cron job returns 401 or 404</summary><div>401 means <code>CRON_SECRET</code> differs from what the caller sends. 404 means <code>CRON_SECRET</code> is not set on the API project (the endpoint does not exist without it).</div></details>
+  <details><summary>Overdue flags look out of date</summary><div>With the daily cron they are refreshed once a day, so this is expected. The Overdue card shows when the check last ran. Click <b>Run</b> on the cron job (Settings → Cron Jobs) to refresh now, or see the optional faster options at the end of section 9.</div></details>
+</section>
+
+</main>
+<footer>Part of the Service Request Management project. Redis and queue concepts: <code>docs/learn-docker-redis-bullmq.html</code>.</footer>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach((btn) => btn.addEventListener('click', async () => {
+  const text = btn.dataset.copy;
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+  const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = old), 1200);
+}));
+</script>
+</body>
+</html>

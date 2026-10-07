@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker, Redis and BullMQ Explained Simply</title>
+<style>
+  :root {
+    --bg: #f8f9fb; --card: #ffffff; --text: #1b2230; --muted: #5b6577; --line: #e3e7ee;
+    --accent: #c62828; --accent-soft: #fdecec; --code-bg: #0f1623; --code-text: #e6ebf5;
+    --blue: #2563eb; --blue-soft: #e8f0fe; --green: #15803d; --green-soft: #e6f6ec; --amber: #b45309; --amber-soft: #fdf3e1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e131d; --card: #151c29; --text: #e8ecf4; --muted: #9aa5b8; --line: #263045;
+      --accent: #ef5350; --accent-soft: #3a1c1f; --code-bg: #0a0f18; --code-text: #e6ebf5;
+      --blue: #7aa7ff; --blue-soft: #1b2a47; --green: #4ade80; --green-soft: #15301f; --amber: #fbbf24; --amber-soft: #3a2d12;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  .layout { display: grid; grid-template-columns: 1fr; max-width: 1120px; margin: 0 auto; padding: 0 16px 80px; gap: 32px; }
+  @media (min-width: 1000px) { .layout { grid-template-columns: 220px minmax(0, 1fr); } }
+  nav.toc { display: none; }
+  @media (min-width: 1000px) { nav.toc { display: block; position: sticky; top: 24px; align-self: start; padding-top: 56px; font-size: 14px; } }
+  nav.toc a { display: block; padding: 6px 10px; color: var(--muted); text-decoration: none; border-left: 2px solid var(--line); }
+  nav.toc a:hover { color: var(--text); border-left-color: var(--accent); }
+  header.hero { grid-column: 1 / -1; padding: 48px 0 8px; }
+  header.hero .tag { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  header.hero h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin: 8px 0 12px; }
+  header.hero p { color: var(--muted); max-width: 720px; margin: 0; font-size: 18px; }
+  main { min-width: 0; }
+  section { padding-top: 48px; }
+  h2 { font-size: 26px; margin: 0 0 4px; line-height: 1.25; }
+  h2 .num { color: var(--accent); margin-right: 8px; }
+  h3 { font-size: 18px; margin: 28px 0 8px; }
+  p { margin: 10px 0; }
+  .lead { color: var(--muted); font-size: 17px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .grid { display: grid; gap: 14px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); }
+  .pill.red { background: var(--accent-soft); color: var(--accent); }
+  .pill.green { background: var(--green-soft); color: var(--green); }
+  .pill.amber { background: var(--amber-soft); color: var(--amber); }
+  .callout { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 14px 18px; border-radius: 0 10px 10px 0; margin: 18px 0; }
+  .callout.blue { border-left-color: var(--blue); background: var(--blue-soft); }
+  .callout.green { border-left-color: var(--green); background: var(--green-soft); }
+  .callout strong:first-child { display: block; margin-bottom: 2px; }
+  code { font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--blue-soft); color: var(--text); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+  .code { position: relative; margin: 14px 0; }
+  .code pre { margin: 0; background: var(--code-bg); color: var(--code-text); padding: 16px 18px; border-radius: 10px; overflow-x: auto; font: 13.5px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .code .c { color: #8fa1c0; }
+  .copy { position: absolute; top: 8px; right: 8px; font: 12px/1 inherit; background: #263045; color: #dbe3f2; border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+  .copy:hover { background: #34425e; }
+  .copy:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 12px 0; display: block; overflow-x: auto; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+  td:first-child { white-space: nowrap; }
+  ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 14px 0; }
+  ol.steps li { counter-increment: s; position: relative; padding: 4px 0 14px 46px; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 2px; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+  ol.steps li::after { content: ""; position: absolute; left: 14px; top: 34px; bottom: 2px; width: 2px; background: var(--line); }
+  ol.steps li:last-child::after { display: none; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 10px 0; }
+  summary { cursor: pointer; padding: 14px 18px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::after { content: "+"; color: var(--accent); font-size: 20px; line-height: 1; }
+  details[open] summary::after { content: "−"; }
+  details > div { padding: 0 18px 14px; color: var(--muted); }
+  svg { max-width: 100%; height: auto; }
+  svg text { font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: var(--text); }
+  svg .box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+  svg .hot { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+  svg .cool { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.5; }
+  svg .ok { fill: var(--green-soft); stroke: var(--green); stroke-width: 1.5; }
+  svg .small { font-size: 11px; fill: var(--muted); }
+  svg .arrow { stroke: var(--muted); stroke-width: 1.6; fill: none; marker-end: url(#ah); }
+  svg .arrow.red { stroke: var(--accent); marker-end: url(#ahr); }
+
+  /* simulators */
+  .sim { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin: 18px 0; }
+  .sim h4 { margin: 0 0 2px; font-size: 16px; }
+  .sim .hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  button.b { font: 600 14px/1 inherit; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+  button.b:hover { border-color: var(--accent); }
+  button.b.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.b.on { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+  button.b:disabled { opacity: .5; cursor: not-allowed; }
+  .term { background: var(--code-bg); color: var(--code-text); border-radius: 10px; padding: 12px 14px; font: 13.5px/1.6 ui-monospace, Menlo, Consolas, monospace; min-height: 130px; max-height: 220px; overflow-y: auto; }
+  .term .in { color: #7dd3fc; } .term .err { color: #fca5a5; } .term .dim { color: #8fa1c0; }
+  .termrow { display: flex; gap: 8px; margin-top: 8px; }
+  .termrow input { flex: 1; min-width: 0; font: 14px ui-monospace, Menlo, Consolas, monospace; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  .board { display: grid; gap: 8px; margin: 10px 0; }
+  .note { display: flex; justify-content: space-between; gap: 10px; background: var(--amber-soft); border: 1px dashed var(--amber); padding: 8px 12px; border-radius: 8px; font: 13px ui-monospace, Menlo, Consolas, monospace; }
+  .note.empty { background: transparent; border-color: var(--line); color: var(--muted); }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .col { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; min-height: 130px; }
+  .col h5 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: flex; justify-content: space-between; }
+  .job { font: 12px ui-monospace, Menlo, Consolas, monospace; background: var(--blue-soft); border: 1px solid var(--blue); color: var(--text); padding: 5px 8px; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; gap: 6px; }
+  .job.fail { background: var(--accent-soft); border-color: var(--accent); }
+  .job.done { background: var(--green-soft); border-color: var(--green); }
+  .job.run { background: var(--amber-soft); border-color: var(--amber); }
+  .status { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: var(--muted); margin-top: 8px; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 10px 0; }
+  .kv div { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .kv small { display: block; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: .06em; }
+  .kv b { font-size: 18px; }
+  footer { grid-column: 1 / -1; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 20px; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<header class="hero">
+  <span class="tag">Beginner guide · Service Request Management project</span>
+  <h1>Docker, Redis and BullMQ, explained simply</h1>
+  <p>You do not need to know anything yet. Read top to bottom, and play with the three little simulators. Every idea here is something our app really does.</p>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <a href="#story">1. The big picture</a>
+  <a href="#docker">2. Docker</a>
+  <a href="#redis">3. Redis</a>
+  <a href="#bullmq">4. BullMQ</a>
+  <a href="#ui">5. Where the web pages come from</a>
+  <a href="#connect">6. How it all connects</a>
+  <a href="#live">7. Live demo plan</a>
+  <a href="#qa">8. Client questions</a>
+  <a href="#plan">9. Study plan</a>
+  <a href="#words">10. Word list</a>
+</nav>
+
+<main>
+
+<!-- 1 -->
+<section id="story">
+  <h2><span class="num">1</span>The big picture: a restaurant</h2>
+  <p class="lead">Think of our project as a small restaurant. Each tool is one part of it.</p>
+  <div class="grid g3">
+    <div class="card"><span class="pill">Docker</span><h3 style="margin-top:10px">The sealed lunch box</h3><p>A ready-to-eat kitchen corner you can open anywhere. It lets us run Redis without installing anything.</p></div>
+    <div class="card"><span class="pill red">Redis</span><h3 style="margin-top:10px">The kitchen whiteboard</h3><p>Quick notes anyone can read or wipe off. Very fast, but temporary.</p></div>
+    <div class="card"><span class="pill amber">BullMQ</span><h3 style="margin-top:10px">Order tickets + a bell</h3><p>A rail of tickets (jobs) and a bell that adds a new ticket every minute.</p></div>
+    <div class="card"><span class="pill green">Worker</span><h3 style="margin-top:10px">The cook</h3><p>Takes one ticket at a time and does it. If the cook leaves, tickets wait.</p></div>
+    <div class="card"><span class="pill">Bull Board</span><h3 style="margin-top:10px">The ticket screen</h3><p>A web page showing how many tickets are waiting, done or failed.</p></div>
+    <div class="card"><span class="pill">PostgreSQL</span><h3 style="margin-top:10px">The filing cabinet</h3><p>Permanent records: users, requests, overdue flags.</p></div>
+  </div>
+  <div class="callout blue"><strong>The one sentence to remember</strong>Docker runs Redis. BullMQ keeps its job list inside Redis. Bull Board draws a page from that job list.</div>
+</section>
+
+<!-- 2 -->
+<section id="docker">
+  <h2><span class="num">2</span>Docker</h2>
+  <p class="lead">Software needs the right version and settings. "It works on my machine" is a classic problem. Docker packages a program with everything it needs, so it runs the same everywhere.</p>
+  <div class="grid g2">
+    <div class="card"><b>Image</b><p>The packaged program, frozen. Example: <code>redis:7-alpine</code>. Like a recipe with ingredients.</p></div>
+    <div class="card"><b>Container</b><p>A running copy of an image. Like a dish made from the recipe. You can start, stop and delete it.</p></div>
+    <div class="card"><b>Port mapping</b><p><code>6379:6379</code> means <em>your computer's port : the container's port</em>. A door from your house into the lunch box.</p></div>
+    <div class="card"><b>Volume</b><p>Storage that survives when the container is deleted. A shelf outside the lunch box.</p></div>
+  </div>
+
+  <h3>Our <code>docker-compose.yml</code>, explained</h3>
+  <p>Compose is just one file that describes the containers we want. This is the Redis part of ours:</p>
+  <div class="code"><button class="copy" data-copy="services:&#10;  redis:&#10;    image: redis:7-alpine&#10;    container_name: srm-redis&#10;    ports:&#10;      - &quot;6379:6379&quot;&#10;    volumes:&#10;      - redis_data:/data">Copy</button><pre>services:
+  redis:                          <span class="c"># a service called "redis"</span>
+    image: redis:7-alpine         <span class="c"># use the official Redis, version 7 (small build)</span>
+    container_name: srm-redis     <span class="c"># the name we use in our commands</span>
+    ports:
+      - "6379:6379"               <span class="c"># your computer :6379  →  the container :6379</span>
+    volumes:
+      - redis_data:/data          <span class="c"># keep Redis's data on a named shelf</span></pre></div>
+  <div class="callout"><strong>Good to know</strong>PostgreSQL is <em>not</em> in Docker for you. It is installed on your Mac. Redis is the only thing you run through Docker.</div>
+
+  <h3>The commands you will actually use</h3>
+  <table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td><code>docker ps</code></td><td>Shows what is running right now</td></tr>
+    <tr><td><code>docker compose up -d redis</code></td><td>Starts Redis from our file (<code>-d</code> = in the background)</td></tr>
+    <tr><td><code>docker compose stop</code></td><td>Stops it (your data is kept)</td></tr>
+    <tr><td><code>docker logs -f srm-redis</code></td><td>Watches what Redis prints (Ctrl+C to leave)</td></tr>
+    <tr><td><code>docker exec -it srm-redis redis-cli</code></td><td>Opens Redis's own prompt inside the container</td></tr>
+    <tr><td><code>docker run -d --name demo-redis -p 6380:6379 redis:7-alpine</code></td><td>Starts a Redis with no compose file at all</td></tr>
+    <tr><td><code>docker rm -f demo-redis</code></td><td>Deletes that container</td></tr>
+  </table>
+</section>
+
+<!-- 3 -->
+<section id="redis">
+  <h2><span class="num">3</span>Redis</h2>
+  <p class="lead">Redis stores <b>keys and values</b> in memory. A key is a label, a value is what is written on the note. A note can have a <b>timer</b> that wipes it by itself.</p>
+
+  <div class="sim" id="simRedis">
+    <h4>Try it: a pretend Redis</h4>
+    <p class="hint">Type a command (or click an example). The board shows the notes and their timers counting down.</p>
+    <div class="btns" id="redisExamples"></div>
+    <div class="term" id="redisOut" aria-live="polite"></div>
+    <form class="termrow" id="redisForm"><input id="redisIn" autocomplete="off" spellcheck="false" placeholder='e.g.  SET city Johannesburg EX 30'><button class="b primary" type="submit">Run</button></form>
+    <h4 style="margin-top:14px">The notice board</h4>
+    <div class="board" id="redisBoard"></div>
+  </div>
+
+  <h3>The same commands, in the real thing</h3>
+  <div class="code"><button class="copy" data-copy="docker exec -it srm-redis redis-cli">Copy</button><pre>docker exec -it srm-redis redis-cli
+<span class="c"># then:</span>
+SET city Johannesburg       <span class="c"># write a note</span>
+GET city                    <span class="c"># read it</span>
+EXPIRE city 30              <span class="c"># wipe it in 30 seconds</span>
+TTL city                    <span class="c"># seconds left (-2 means it is gone)</span></pre></div>
+
+  <h3>What our app keeps in Redis</h3>
+  <table>
+    <tr><th>Key</th><th>Why it exists</th></tr>
+    <tr><td><code>auth:denylist:&lt;id&gt;</code></td><td>Remembers logged-out login tokens, so logout really works</td></tr>
+    <tr><td><code>dashboard:summary</code></td><td>The dashboard numbers, kept for 60 seconds so we don't count rows every time</td></tr>
+    <tr><td><code>bull:overdue-check:*</code></td><td>BullMQ's job list and timer (next section)</td></tr>
+  </table>
+
+  <h3>Watch the cache work</h3>
+  <p>This is exactly our dashboard rule: check Redis first, otherwise ask the database and remember the answer for 60 seconds. Anything that changes the data throws the note away.</p>
+  <div class="sim" id="simCache">
+    <h4>Dashboard cache simulator</h4>
+    <p class="hint">Click <b>Open dashboard</b> twice. Then <b>Create a request</b>. Then open it again. Try <b>Wait 30s</b> a couple of times.</p>
+    <div class="kv">
+      <div><small>PostgreSQL: total requests</small><b id="cDb">13</b></div>
+      <div><small>Redis note <code>dashboard:summary</code></small><b id="cNote">(empty)</b></div>
+      <div><small>Note timer</small><b id="cTtl">—</b></div>
+    </div>
+    <div class="btns">
+      <button class="b primary" id="cOpen">Open dashboard</button>
+      <button class="b" id="cCreate">Create a request</button>
+      <button class="b" id="cWait">Wait 30s</button>
+      <button class="b" id="cReset">Reset</button>
+    </div>
+    <div class="term" id="cLog" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="bullmq">
+  <h2><span class="num">4</span>BullMQ</h2>
+  <p class="lead">Some work should happen <em>later</em> or <em>on a timer</em>, with nobody clicking anything. BullMQ is a to-do list for that, stored in Redis.</p>
+  <div class="grid g2">
+    <div class="card"><b>Queue</b><p>The to-do list.</p></div>
+    <div class="card"><b>Job</b><p>One item on it, like "run the overdue check".</p></div>
+    <div class="card"><b>Worker</b><p>A program that takes jobs one at a time and does them.</p></div>
+    <div class="card"><b>Scheduler</b><p>The alarm clock: "add a job every 60 seconds".</p></div>
+  </div>
+
+  <h3>Play with a queue</h3>
+  <div class="sim" id="simQueue">
+    <h4>Queue and worker simulator</h4>
+    <p class="hint">Add jobs and watch the worker take them. Turn the worker off and the jobs pile up. A failing job is retried 3 times, then gives up (like ours).</p>
+    <div class="btns">
+      <button class="b primary" id="qAdd">Add a job</button>
+      <button class="b" id="qFail">Add a job that fails</button>
+      <button class="b on" id="qWorker">Worker: ON</button>
+      <button class="b" id="qClock">Alarm clock: OFF</button>
+      <button class="b" id="qReset">Reset</button>
+    </div>
+    <div class="cols">
+      <div class="col"><h5>Waiting <span id="nW">0</span></h5><div id="lW"></div></div>
+      <div class="col"><h5>Active <span id="nA">0</span></h5><div id="lA"></div></div>
+      <div class="col"><h5>Completed <span id="nC">0</span></h5><div id="lC"></div></div>
+      <div class="col"><h5>Failed <span id="nF">0</span></h5><div id="lF"></div></div>
+    </div>
+    <div class="status"><span id="qStatus">Worker is running</span><span id="qNext"></span></div>
+  </div>
+
+  <div class="callout"><strong>Why not just do the work inside the website's server?</strong>Nobody is clicking when a timer fires. A slow job would slow down visitors. And a queue gives automatic retries and a history of what happened.</div>
+
+  <h3>Our overdue check, one cycle</h3>
+  <svg viewBox="0 0 760 210" role="img" aria-label="Scheduler adds a job to the queue every 60 seconds; the worker runs it in one database transaction">
+    <defs>
+      <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#8a94a6"/></marker>
+      <marker id="ahr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#c62828"/></marker>
+    </defs>
+    <rect class="cool" x="10" y="70" width="140" height="64" rx="10"/><text x="80" y="98" text-anchor="middle" font-weight="600">Scheduler</text><text x="80" y="118" text-anchor="middle" class="small">every 60 seconds</text>
+    <path class="arrow" d="M150,102 L215,102"/><text x="182" y="92" text-anchor="middle" class="small">adds job</text>
+    <rect class="hot" x="215" y="70" width="140" height="64" rx="10"/><text x="285" y="98" text-anchor="middle" font-weight="600">Queue</text><text x="285" y="118" text-anchor="middle" class="small">stored in Redis</text>
+    <path class="arrow" d="M355,102 L420,102"/><text x="388" y="92" text-anchor="middle" class="small">takes it</text>
+    <rect class="box" x="420" y="14" width="330" height="182" rx="10"/><text x="585" y="38" text-anchor="middle" font-weight="600">Worker (one all-or-nothing transaction)</text>
+    <text x="436" y="68">1. Flag requests open/in-progress for over 24h</text>
+    <text x="436" y="92">2. Un-flag any that should not be (resolved)</text>
+    <text x="436" y="116">3. Save the "last success" time</text>
+    <text x="436" y="148" font-weight="600">If anything changed:</text>
+    <text x="436" y="170">delete the cached dashboard numbers</text>
+  </svg>
+</section>
+
+<!-- 5 -->
+<section id="ui">
+  <h2><span class="num">5</span>Where do those web pages come from?</h2>
+  <p class="lead">I did not design either of them. They are ready-made.</p>
+  <div class="grid g2">
+    <div class="card"><span class="pill">Bull Board</span><h3 style="margin-top:10px">A library inside our server</h3>
+      <p>An open-source package (<code>@bull-board/express</code>) that already contains a finished web page. We only give it our queue. In <code>server/src/app.ts</code>:</p>
+      <div class="code"><pre>createBullBoard({ queues: [ourQueue] })
+app.use('/admin/queues', password, board)</pre></div>
+      <p>Open it at <code>http://localhost:4000/admin/queues</code>.</p></div>
+    <div class="card"><span class="pill red">RedisInsight</span><h3 style="margin-top:10px">A separate program in Docker</h3>
+      <p>Made by the Redis company, downloaded as a Docker image. Our code never touches it. It is only a window into Redis.</p>
+      <p>Open it at <code>http://localhost:5540</code>.</p></div>
+  </div>
+  <div class="callout green"><strong>What to tell the client</strong>The queue and the worker are our code. The dashboards are standard open-source tools that read what is in Redis.</div>
+</section>
+
+<!-- 6 -->
+<section id="connect">
+  <h2><span class="num">6</span>How it all connects</h2>
+  <svg viewBox="0 0 780 340" role="img" aria-label="Map of our programs: browser, website, API, PostgreSQL, Redis, worker">
+    <rect class="box" x="10" y="20" width="120" height="56" rx="10"/><text x="70" y="46" text-anchor="middle" font-weight="600">Browser</text><text x="70" y="64" text-anchor="middle" class="small">you</text>
+    <path class="arrow" d="M130,48 L170,48"/>
+    <rect class="box" x="170" y="20" width="150" height="56" rx="10"/><text x="245" y="46" text-anchor="middle" font-weight="600">Website</text><text x="245" y="64" text-anchor="middle" class="small">Vite · :5173</text>
+    <path class="arrow" d="M320,48 L370,48"/><text x="345" y="40" text-anchor="middle" class="small">/api</text>
+    <rect class="cool" x="370" y="20" width="170" height="56" rx="10"/><text x="455" y="46" text-anchor="middle" font-weight="600">API (Express)</text><text x="455" y="64" text-anchor="middle" class="small">:4000 · docs · Bull Board</text>
+    <path class="arrow" d="M540,48 L600,48"/>
+    <rect class="ok" x="600" y="20" width="170" height="56" rx="10"/><text x="685" y="46" text-anchor="middle" font-weight="600">PostgreSQL</text><text x="685" y="64" text-anchor="middle" class="small">:5432 · on your Mac</text>
+
+    <path class="arrow red" d="M455,76 L455,150"/><text x="465" y="118" class="small">checks login, caches</text>
+    <rect class="hot" x="330" y="150" width="250" height="70" rx="10"/><text x="455" y="178" text-anchor="middle" font-weight="600">Redis (Docker container)</text><text x="455" y="198" text-anchor="middle" class="small">:6379 · notes + the job list</text>
+    <path class="arrow red" d="M580,185 L650,185 L650,252"/>
+    <rect class="box" x="560" y="252" width="210" height="62" rx="10"/><text x="665" y="278" text-anchor="middle" font-weight="600">Worker</text><text x="665" y="296" text-anchor="middle" class="small">separate process · every 60s</text>
+    <rect class="box" x="10" y="150" width="190" height="70" rx="10" stroke-dasharray="5 4"/><text x="105" y="178" text-anchor="middle" font-weight="600">RedisInsight</text><text x="105" y="198" text-anchor="middle" class="small">optional · :5540 · just a viewer</text>
+    <path class="arrow" d="M200,185 L330,185" stroke-dasharray="5 4"/>
+    <text x="10" y="334" class="small">The worker also writes the overdue flags into PostgreSQL.</text>
+  </svg>
+
+  <table>
+    <tr><th>Program</th><th>Start command</th><th>Address</th></tr>
+    <tr><td>Redis (Docker)</td><td><code>docker compose up -d redis</code></td><td><code>localhost:6379</code></td></tr>
+    <tr><td>API</td><td><code>cd server &amp;&amp; npm run dev</code></td><td><code>http://localhost:4000</code></td></tr>
+    <tr><td>Worker</td><td><code>cd server &amp;&amp; npm run worker</code></td><td>no page (see Bull Board)</td></tr>
+    <tr><td>Website</td><td><code>cd client &amp;&amp; npm run dev</code></td><td><code>http://localhost:5173</code></td></tr>
+  </table>
+
+  <h3>What happens when you click "Create request"</h3>
+  <ol class="steps">
+    <li>The website sends it to the <b>API</b>. The API first asks <b>Redis</b>: "is this login still valid?"</li>
+    <li>The API saves the request in <b>PostgreSQL</b>.</li>
+    <li>The API tells Redis to <b>delete</b> <code>dashboard:summary</code>, because the numbers are now out of date.</li>
+    <li>Next time you open the dashboard: Redis has no note, so the API counts in PostgreSQL, stores the answer for 60 seconds, and shows it.</li>
+    <li>Every minute, on its own, the <b>scheduler</b> adds a job. The <b>worker</b> flags anything open for more than 24 hours, saves the time it ran, and deletes the cached numbers if something changed.</li>
+  </ol>
+
+  <h3>Starting everything each day</h3>
+  <div class="code"><button class="copy" data-copy="open -a Docker&#10;docker compose up -d redis&#10;cd server &amp;&amp; npm run dev&#10;cd server &amp;&amp; npm run worker&#10;cd client &amp;&amp; npm run dev">Copy</button><pre>open -a Docker               <span class="c"># 1. start Docker Desktop (wait for it to settle)</span>
+docker compose up -d redis   <span class="c"># 2. Redis</span>
+cd server &amp;&amp; npm run dev     <span class="c"># 3. API      (terminal 1)</span>
+cd server &amp;&amp; npm run worker  <span class="c"># 4. Worker   (terminal 2)</span>
+cd client &amp;&amp; npm run dev     <span class="c"># 5. Website  (terminal 3)</span></pre></div>
+  <p>To stop: Ctrl+C in each terminal, then <code>docker compose stop</code>.</p>
+</section>
+
+<!-- 7 -->
+<section id="live">
+  <h2><span class="num">7</span>"Build it in front of us" plan</h2>
+  <p class="lead">There is a ready-made kit in <code>docs/live-demo/</code> (about 40 lines of code, its own Redis on port 6380). The whole thing takes about 10 minutes.</p>
+  <ol class="steps">
+    <li><b>Start a Redis.</b> Say: "Docker lets me run Redis in one command."
+      <div class="code"><button class="copy" data-copy="docker run -d --name demo-redis -p 6380:6379 redis:7-alpine">Copy</button><pre>docker run -d --name demo-redis -p 6380:6379 redis:7-alpine
+docker exec -it demo-redis redis-cli</pre></div>
+      Then type <code>SET greeting hello</code>, <code>GET greeting</code>, <code>EXPIRE greeting 20</code>, <code>TTL greeting</code>.</li>
+    <li><b>Show caching.</b> Run <code>npm run cache</code>. You will see a slow first answer (~1500 ms) and a fast second one (~1 ms).</li>
+    <li><b>Show the queue.</b> Three terminals: <code>npm run board</code> (open <code>localhost:3010/board</code>), <code>npm run worker</code>, then <code>npm run add</code>. Watch jobs complete, one wait 10 seconds, one fail three times, and one appear every 15 seconds by itself.</li>
+    <li><b>Prove it is real.</b> <code>docker exec -it demo-redis redis-cli KEYS "bull:*"</code>. Say: "The queue is just notes in Redis."</li>
+    <li><b>Show why the worker is separate.</b> Stop the worker, run <code>npm run add</code>: jobs pile up. Start the worker: it clears them.</li>
+  </ol>
+  <div class="callout blue"><strong>Practise twice</strong>Do it once while reading, then delete the files and retype them from <code>docs/live-demo/README.md</code> without copying. Then it is yours.</div>
+
+  <h3>Your 2-minute explanation</h3>
+  <div class="card"><p>"Employees submit service requests in a React app. An Express API stores them in PostgreSQL. I use Redis for three things: caching the dashboard numbers for 60 seconds, remembering logged-out tokens so logout really works, and as the storage for a BullMQ job queue. A separate worker process runs every minute, finds requests that have been open or in progress for more than 24 hours, and marks them overdue. I run Redis in Docker so it installs with one command."</p></div>
+</section>
+
+<!-- 8 -->
+<section id="qa">
+  <h2><span class="num">8</span>Questions the client may ask</h2>
+  <details><summary>Why Redis and not just PostgreSQL?</summary><div>Redis is much faster for small, temporary data, and its timers delete things automatically. PostgreSQL stays the permanent record.</div></details>
+  <details><summary>What happens if Redis goes down?</summary><div>Logins are refused with a 503 (on purpose, because we can't check for logged-out tokens), the cache is skipped, and the queue pauses. When Redis comes back, everything resumes by itself.</div></details>
+  <details><summary>What if the worker stops?</summary><div>The website keeps working. Overdue flags just stop updating and the dashboard shows "checked X minutes ago". Starting the worker catches up.</div></details>
+  <details><summary>Why a separate worker process?</summary><div>Website traffic and background work don't slow each other down, and each can be restarted or scaled on its own.</div></details>
+  <details><summary>What stops two workers doing the same job twice?</summary><div>The queue gives each job to only one worker, and the work is safe to repeat: it only changes rows whose flag is wrong.</div></details>
+  <details><summary>How does the cache stay correct?</summary><div>Every create, edit, delete and status change (and the worker) deletes <code>dashboard:summary</code>. The 60-second timer is a safety net.</div></details>
+  <details><summary>Is the Bull Board page your own UI?</summary><div>No. It is an open-source library. We mount it in our server and protect it with a password.</div></details>
+  <details><summary>Why Docker?</summary><div>One command gives everyone the same Redis, with nothing to install or configure.</div></details>
+</section>
+
+<!-- 9 -->
+<section id="plan">
+  <h2><span class="num">9</span>A study plan that works</h2>
+  <div class="grid g3">
+    <div class="card"><span class="pill">Day 1 · 45 min</span><p>Run the Docker commands and the Redis prompt. Delete the Redis container and recreate it.</p></div>
+    <div class="card"><span class="pill">Day 2 · 60 min</span><p>Run <code>docs/live-demo/</code> step by step. Then delete the files and retype them.</p></div>
+    <div class="card"><span class="pill">Day 3 · 45 min</span><p>Explain section 6 out loud, pointing at the real files. Do the experiments in <code>docs/redis-and-bullmq.md</code>.</p></div>
+  </div>
+  <div class="callout"><strong>Break things on purpose</strong>Stop Redis. Stop the worker. Change <code>OVERDUE_CHECK_INTERVAL_MS</code>. Predict what you will see <em>before</em> you look.</div>
+</section>
+
+<!-- 10 -->
+<section id="words">
+  <h2><span class="num">10</span>Word list</h2>
+  <table>
+    <tr><th>Word</th><th>Plain meaning</th></tr>
+    <tr><td>Image / container</td><td>A packaged program / its running copy</td></tr>
+    <tr><td>Compose</td><td>One file that describes several containers</td></tr>
+    <tr><td>Port mapping</td><td>A door between your computer and a container</td></tr>
+    <tr><td>Volume</td><td>Storage that outlives a container</td></tr>
+    <tr><td>Key / value</td><td>The label on a note / what is written on it</td></tr>
+    <tr><td>TTL</td><td>Seconds until a note wipes itself</td></tr>
+    <tr><td>Cache / invalidate</td><td>A remembered answer / throwing it away</td></tr>
+    <tr><td>Queue / job / worker / scheduler</td><td>To-do list / one item / the doer / the alarm clock</td></tr>
+    <tr><td>Idempotent</td><td>Safe to repeat: the second run changes nothing</td></tr>
+    <tr><td>Transaction</td><td>An all-or-nothing group of database changes</td></tr>
+  </table>
+</section>
+
+</main>
+<footer>Part of the Service Request Management project. More detail: <code>docs/redis-and-bullmq.md</code> and <code>docs/live-demo/README.md</code>.</footer>
+</div>
+
+<script>
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy').forEach((btn) => btn.addEventListener('click', async () => {
+  const text = btn.dataset.copy;
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+  const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = old), 1200);
+}));
+
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+/* ---------- 1. pretend Redis ---------- */
+(() => {
+  const store = new Map(); // key -> { value, expiresAt (ms) | null }
+  const out = document.getElementById('redisOut'), board = document.getElementById('redisBoard');
+  const input = document.getElementById('redisIn');
+  const examples = ['SET city Johannesburg', 'GET city', 'EXPIRE city 20', 'TTL city', 'SET code 1234 EX 15', 'EXISTS code', 'KEYS *', 'DEL city'];
+  const alive = (k) => { const e = store.get(k); if (!e) return null; if (e.expiresAt && e.expiresAt <= Date.now()) { store.delete(k); return null; } return e; };
+  const ttl = (k) => { const e = alive(k); return !e ? -2 : e.expiresAt ? Math.ceil((e.expiresAt - Date.now()) / 1000) : -1; };
+  const print = (cls, text) => { out.insertAdjacentHTML('beforeend', `<div class="${cls}">${esc(text)}</div>`); out.scrollTop = out.scrollHeight; };
+  function run(line) {
+    const parts = line.trim().split(/\s+/).filter(Boolean); if (!parts.length) return;
+    print('in', '> ' + line.trim());
+    const cmd = parts[0].toUpperCase(), key = parts[1];
+    if (cmd === 'SET' && parts.length >= 3) {
+      let ex = null; const exAt = parts.findIndex((p, i) => i > 2 && p.toUpperCase() === 'EX');
+      const valueParts = exAt > -1 ? parts.slice(2, exAt) : parts.slice(2);
+      if (exAt > -1) ex = parseInt(parts[exAt + 1], 10);
+      store.set(key, { value: valueParts.join(' '), expiresAt: ex > 0 ? Date.now() + ex * 1000 : null }); print('', 'OK');
+    } else if (cmd === 'GET' && key) { const e = alive(key); print(e ? '' : 'dim', e ? `"${e.value}"` : '(nil)  - no such note'); }
+    else if (cmd === 'DEL' && key) { const had = !!alive(key); store.delete(key); print('', `(integer) ${had ? 1 : 0}`); }
+    else if (cmd === 'EXISTS' && key) print('', `(integer) ${alive(key) ? 1 : 0}`);
+    else if (cmd === 'EXPIRE' && key && parts[2]) { const e = alive(key); if (e) { e.expiresAt = Date.now() + parseInt(parts[2], 10) * 1000; } print('', `(integer) ${e ? 1 : 0}`); }
+    else if (cmd === 'TTL' && key) { const t = ttl(key); print(t === -2 ? 'dim' : '', `(integer) ${t}` + (t === -2 ? '  - gone' : t === -1 ? '  - no timer' : '')); }
+    else if (cmd === 'KEYS') { const ks = [...store.keys()].filter(alive); print(ks.length ? '' : 'dim', ks.length ? ks.map((k, i) => `${i + 1}) "${k}"`).join('\n') : '(empty)'); }
+    else print('err', `(error) I only know: SET key value [EX n], GET, DEL, EXISTS, EXPIRE key n, TTL, KEYS *`);
+    render();
+  }
+  function render() {
+    const keys = [...store.keys()].filter(alive);
+    board.innerHTML = keys.length ? keys.map((k) => { const e = store.get(k); const t = ttl(k); return `<div class="note"><span>${esc(k)} → "${esc(e.value)}"</span><span>${t === -1 ? 'no timer' : t + 's left'}</span></div>`; }).join('') : '<div class="note empty">The board is empty. Add a note with SET.</div>';
+  }
+  examples.forEach((ex) => { const b = document.createElement('button'); b.className = 'b'; b.type = 'button'; b.textContent = ex; b.onclick = () => { input.value = ex; input.focus(); }; document.getElementById('redisExamples').appendChild(b); });
+  document.getElementById('redisForm').addEventListener('submit', (e) => { e.preventDefault(); run(input.value); input.value = ''; });
+  print('dim', 'Pretend Redis ready. Try: SET city Johannesburg EX 20'); render(); setInterval(render, 500);
+})();
+
+/* ---------- 2. dashboard cache ---------- */
+(() => {
+  let db = 13, note = null, clock = 0; // note: { value, expires } in simulated seconds
+  const $ = (id) => document.getElementById(id);
+  const log = (cls, html) => { $('cLog').insertAdjacentHTML('beforeend', `<div class="${cls}">${html}</div>`); $('cLog').scrollTop = $('cLog').scrollHeight; };
+  const valid = () => note && note.expires > clock;
+  function render() {
+    if (note && note.expires <= clock) { note = null; log('dim', '… 60 seconds passed: Redis wiped the note by itself (TTL ran out).'); }
+    $('cDb').textContent = db; $('cNote').textContent = valid() ? `{ total: ${note.value} }` : '(empty)'; $('cTtl').textContent = valid() ? `${note.expires - clock}s` : '—';
+  }
+  $('cOpen').onclick = () => {
+    if (valid()) log('', `<span style="color:#4ade80">HIT</span>  answered from Redis in about 1 ms  (total ${note.value})`);
+    else { note = { value: db, expires: clock + 60 }; log('', `<span style="color:#fca5a5">MISS</span> no note, so asked PostgreSQL (about 1500 ms), then saved a note for 60s  (total ${db})`); }
+    render();
+  };
+  $('cCreate').onclick = () => { db++; const had = valid(); note = null; log('in', `Created a request. PostgreSQL now has ${db}.` + (had ? ' The old note is now wrong, so the app DELETED it from Redis.' : ' (No note was there to delete.)')); render(); };
+  $('cWait').onclick = () => { clock += 30; log('dim', 'Waited 30 seconds…'); render(); };
+  $('cReset').onclick = () => { db = 13; note = null; clock = 0; $('cLog').innerHTML = ''; log('dim', 'Reset. Click "Open dashboard".'); render(); };
+  setInterval(() => { clock++; render(); }, 1000);
+  log('dim', 'Click "Open dashboard".'); render();
+})();
+
+/* ---------- 3. queue + worker ---------- */
+(() => {
+  const S = { waiting: [], active: [], done: [], failed: [], id: 1, worker: true, clock: false, busy: false, nextIn: 5 };
+  const $ = (id) => document.getElementById(id);
+  const chip = (j, cls = '') => `<div class="job ${cls}"><span>#${j.id} ${esc(j.name)}</span><span>${j.fail ? j.attempts + '/3' : ''}</span></div>`;
+  function render() {
+    $('lW').innerHTML = S.waiting.map((j) => chip(j)).join(''); $('lA').innerHTML = S.active.map((j) => chip(j, 'run')).join('');
+    $('lC').innerHTML = S.done.slice(-6).map((j) => chip(j, 'done')).join(''); $('lF').innerHTML = S.failed.map((j) => chip(j, 'fail')).join('');
+    $('nW').textContent = S.waiting.length; $('nA').textContent = S.active.length; $('nC').textContent = S.done.length; $('nF').textContent = S.failed.length;
+    $('qWorker').textContent = 'Worker: ' + (S.worker ? 'ON' : 'OFF'); $('qWorker').classList.toggle('on', S.worker);
+    $('qClock').textContent = 'Alarm clock: ' + (S.clock ? 'ON' : 'OFF'); $('qClock').classList.toggle('on', S.clock);
+    $('qStatus').textContent = S.worker ? (S.active.length ? 'Worker is busy…' : 'Worker is waiting for jobs') : 'Worker is OFF: jobs will pile up in Waiting';
+    $('qNext').textContent = S.clock ? `Alarm clock adds the next job in ${S.nextIn}s` : '';
+  }
+  const add = (name, fail) => { S.waiting.push({ id: S.id++, name, fail, attempts: 0 }); render(); };
+  function work() {
+    if (!S.worker || S.busy || !S.waiting.length) return;
+    S.busy = true; const job = S.waiting.shift(); S.active.push(job); job.attempts++; render();
+    setTimeout(() => {
+      S.active = S.active.filter((j) => j !== job);
+      if (!job.fail) S.done.push(job);
+      else if (job.attempts < 3) setTimeout(() => { S.waiting.push(job); render(); }, 900); // retry after a short pause
+      else S.failed.push(job);
+      S.busy = false; render();
+    }, 1400);
+  }
+  $('qAdd').onclick = () => add('send-report', false);
+  $('qFail').onclick = () => add('always-fails', true);
+  $('qWorker').onclick = () => { S.worker = !S.worker; render(); };
+  $('qClock').onclick = () => { S.clock = !S.clock; S.nextIn = 5; render(); };
+  $('qReset').onclick = () => { Object.assign(S, { waiting: [], active: [], done: [], failed: [], busy: false, nextIn: 5 }); render(); };
+  setInterval(work, 250);
+  setInterval(() => { if (!S.clock) return; S.nextIn--; if (S.nextIn <= 0) { add('overdue-check', false); S.nextIn = 5; } render(); }, 1000);
+  render();
+})();
+</script>
+</body>
+</html>

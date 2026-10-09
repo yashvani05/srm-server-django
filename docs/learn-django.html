@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Django from zero</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;line-height:1.6;color:#1f2937;background:#f8fafc}
+h1{color:#0f766e}h2{margin-top:2.2em;border-bottom:2px solid #99f6e4;padding-bottom:4px}
+code,pre{background:#e2e8f0;border-radius:6px;font-size:.9em}code{padding:1px 5px}pre{padding:12px;overflow:auto}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5e1;padding:6px 10px;text-align:left}th{background:#ccfbf1}
+.tip{background:#ecfeff;border-left:4px solid #06b6d4;padding:8px 14px;margin:14px 0}
+</style></head><body>
+<h1>Django from zero (for someone who knows Node/Express)</h1>
+<p>Our backend lives in <code>server-django/</code>. It exposes exactly the same API as the Node version, so the React app did not change. This page explains it in the order a request travels.</p>
+
+<h2>1. Node idea → Django idea</h2>
+<table>
+<tr><th>You know (Node)</th><th>Django equivalent</th><th>Where</th></tr>
+<tr><td>Express routes</td><td><code>urls.py</code></td><td><code>config/urls.py</code>, <code>*/urls.py</code></td></tr>
+<tr><td>Controller</td><td>View (class with <code>get</code>/<code>post</code>)</td><td><code>*/views.py</code></td></tr>
+<tr><td>Joi/Zod validation</td><td>Serializer</td><td><code>*/serializers.py</code></td></tr>
+<tr><td>Sequelize model + migration</td><td>Model + <code>makemigrations</code>/<code>migrate</code></td><td><code>*/models.py</code>, <code>*/migrations/</code></td></tr>
+<tr><td>Service layer</td><td>Plain Python functions</td><td><code>service_requests/services.py</code></td></tr>
+<tr><td>Middleware (auth)</td><td>Authentication class</td><td><code>accounts/authentication.py</code></td></tr>
+<tr><td>RBAC permission check</td><td>Groups + permissions, permission class</td><td><code>accounts/roles.py</code>, <code>permissions.py</code></td></tr>
+<tr><td>BullMQ queue + worker + repeat</td><td>Celery worker + Celery Beat</td><td><code>service_requests/tasks.py</code>, <code>config/celery.py</code></td></tr>
+<tr><td>.env + config</td><td><code>settings.py</code></td><td><code>config/settings.py</code></td></tr>
+<tr><td>swagger-jsdoc</td><td>drf-spectacular (auto from code)</td><td><code>/api-docs/</code></td></tr>
+</table>
+
+<h2>2. Follow one request: <code>GET /api/v1/requests?overdue=true</code></h2>
+<ol>
+<li><b>config/urls.py</b> sends <code>api/v1/</code> to each app's <code>urls.py</code>; <code>service_requests/urls.py</code> maps <code>requests</code> to <code>RequestCollectionView</code>.</li>
+<li><b>Authentication</b> (<code>accounts/authentication.py</code>): reads the Bearer token, checks signature/expiry, checks the Redis denylist (logout), loads the user.</li>
+<li><b>Permission</b> (<code>get_permissions</code> in the view): asks "does this user's role group hold <code>requests.read</code>?"</li>
+<li><b>Serializer</b> (<code>ListQuerySerializer</code>): validates <code>page</code>, <code>limit</code>, <code>status</code>, <code>overdue</code>.</li>
+<li><b>Service</b> (<code>services.list_requests</code>): admin sees all, employee only their own; builds the query and paginates.</li>
+<li><b>Response</b>: <code>core/responses.success()</code> wraps data as <code>{success, message, data}</code>. Errors are wrapped the same way in <code>core/exceptions.py</code>.</li>
+</ol>
+
+<h2>3. The overdue job (Q2)</h2>
+<ul>
+<li>Rule: OPEN/IN_PROGRESS for more than 24h in the <i>current</i> status. Changing status restarts the clock and clears the flag at once.</li>
+<li><b>Celery Beat</b> is the alarm clock: every 60s it adds <code>check_overdue</code> to a to-do list in Redis.</li>
+<li><b>Celery worker</b> takes the task and runs <code>overdue.run_overdue_check()</code> in one DB transaction: flag newly overdue rows, heal stale flags, save "last success" time.</li>
+<li>The dashboard shows that last-success time and reads counts from a Redis cache (60s). Any write clears the cache.</li>
+</ul>
+
+<h2>4. Run it (copy-paste)</h2>
+<pre>cd server-django
+source .venv/bin/activate
+docker start srm-redis          # Redis
+python manage.py migrate        # create tables
+python manage.py seed_demo      # demo users + 12 requests
+python manage.py runserver 8000 # API  (terminal 1)
+celery -A config worker -B -l info --pool=solo   # worker + scheduler (terminal 2)
+cd ../client &amp;&amp; VITE_PROXY_TARGET=http://localhost:8000 npm run dev   # UI (terminal 3)</pre>
+<p>Logins: <code>admin@company.com / Admin@12345</code>, <code>employee@company.com / Employee@12345</code>. Swagger: <code>http://localhost:8000/api-docs/</code> (<code>apidocs / ApiDocs@12345</code>). Tests: <code>python manage.py test</code>.</p>
+
+<h2>5. Live demo script</h2>
+<ol>
+<li>Show the UI log in as employee (sees only own requests), then admin (sees all, can change status/delete).</li>
+<li>Open the dashboard: six numbers, "last overdue check" time.</li>
+<li>Terminal 2: show the worker log line "Overdue check finished" appearing every minute.</li>
+<li>In <code>psql srm_django</code> push a request's <code>status_changed_at</code> back 30 hours; within a minute refresh the dashboard: overdue count goes up.</li>
+<li>Open Swagger, authorise, try an endpoint.</li>
+<li>Run <code>python manage.py test</code>: 10 tests green.</li>
+</ol>
+
+<h2>6. Questions the client may ask</h2>
+<table>
+<tr><th>Question</th><th>Answer</th></tr>
+<tr><td>Why Django REST Framework?</td><td>It is the standard way to build APIs in Django: serializers validate input, views handle HTTP, built-in auth/permission hooks.</td></tr>
+<tr><td>Where is role checking?</td><td>Roles are Django Groups holding permissions (<code>accounts/roles.py</code>); each view declares the permission it needs.</td></tr>
+<tr><td>How does logout work with JWT?</td><td>The token's id is stored in Redis until it would expire; every request checks it.</td></tr>
+<tr><td>What if Redis is down?</td><td>Dashboard falls back to the database. Auth fails closed with 503 because we cannot verify revocation.</td></tr>
+<tr><td>Why a separate Celery process?</td><td>The web server must stay fast; scheduled work runs elsewhere and survives web restarts.</td></tr>
+<tr><td>Is the overdue job safe to run twice?</td><td>Yes, it only updates rows whose flag is wrong, inside one transaction.</td></tr>
+</table>
+<div class="tip">Tip: when lost, open <code>service_requests/services.py</code> first. It holds the business rules in plain readable Python.</div>
+</body></html>

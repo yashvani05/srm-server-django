@@ -8,8 +8,8 @@ import { RequestDetailsSkeleton } from '../../components/requests/RequestDetails
 import { StatusActions } from '../../components/requests/StatusActions';
 import { StatusBadge } from '../../components/requests/StatusBadge';
 import { StatusStepper } from '../../components/requests/StatusStepper';
+import { ActionMenu } from '../../components/ui/ActionMenu';
 import { Button } from '../../components/ui/Button';
-import { ButtonLink } from '../../components/ui/ButtonLink';
 import { Card } from '../../components/ui/Card';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Icon } from '../../components/ui/Icon';
@@ -87,17 +87,14 @@ export function RequestDetailsPage() {
           </div>
           <h1 className="break-words text-xl font-semibold text-gray-900">{request.title}</h1>
         </div>
-        <div className="flex shrink-0 gap-2">
-          {canEdit && (
-            <ButtonLink to={`/requests/${request.id}/edit`} variant="secondary">
-              <Icon name="pencil" className="h-4 w-4" /> Edit
-            </ButtonLink>
-          )}
-          {canDelete && (
-            <Button variant="secondary" className="text-accent-700 hover:bg-accent-50" onClick={() => setConfirmingDelete(true)}>
-              <Icon name="trash" className="h-4 w-4" /> Delete
-            </Button>
-          )}
+        <div className="shrink-0">
+          <ActionMenu
+            label={`Actions for ${request.title}`}
+            items={[
+              ...(canEdit ? [{ label: 'Edit', icon: 'pencil' as const, onSelect: () => navigate(`/requests/${request.id}/edit`) }] : []),
+              ...(canDelete ? [{ label: 'Delete', icon: 'trash' as const, danger: true, onSelect: () => setConfirmingDelete(true) }] : []),
+            ]}
+          />
         </div>
       </div>
 

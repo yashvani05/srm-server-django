@@ -11,7 +11,7 @@ export function RequestCreatePage() {
 
   const handleSubmit = async (values: RequestFormValues) => {
     const result = await create(values);
-    if (result.data) navigate(`/requests/${result.data.id}`);
+    if (result.data) navigate('/requests');
     return result;
   };
 

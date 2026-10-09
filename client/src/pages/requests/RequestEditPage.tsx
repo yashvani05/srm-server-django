@@ -21,7 +21,7 @@ export function RequestEditPage() {
 
   const handleSubmit = async (values: RequestFormValues) => {
     const result = await update(id, values);
-    if (result.data) navigate(`/requests/${id}`);
+    if (result.data) navigate('/requests');
     return result;
   };
 

@@ -3,6 +3,8 @@
 Every tracked file, generated from `git ls-files` (lock files excluded). **read** = I opened and read the file in this handover. **listed** = present and classified by name/location but **not opened individually** in this pass (mostly presentational React components and generic Django boilerplate).
 
 
+> **Bundle scope:** `PROJECT_HANDOVER_BUNDLE.zip` contains `handover/`, `server-django/`, `client/` (source + config, no images/lock files), the root `README.md`, `.env.example` and `docker-compose.yml`. It does **not** contain the legacy Node `server/` folder or `docs/` (listed below only because they are tracked in git).
+
 ## server-django
 
 | File | Role | Inspected |

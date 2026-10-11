@@ -35,7 +35,7 @@ class RequestCollectionView(APIView):
         return [require_permission("requests.create" if self.request.method == "POST" else "requests.read")()]
 
     @extend_schema(
-        tags=["Service Requests"], summary="List service requests",
+        tags=["Service Requests"], summary="List service requests", operation_id="requests_list",
         parameters=[OpenApiParameter("status", str), OpenApiParameter("priority", str), OpenApiParameter("overdue", bool),
                     OpenApiParameter("page", int), OpenApiParameter("limit", int)],
         responses={200: Page, 400: ERRORS[400], 401: ERRORS[401], 403: ERRORS[403]},

@@ -76,7 +76,7 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     @extend_schema(
-        tags=["Auth"], summary="Log out",
+        tags=["Auth"], summary="Log out", request=None,
         description="Revokes the current token: its id is stored in Redis until it would have expired, so it cannot be reused.",
         responses={200: envelope("LogoutResponse"), 401: ERRORS[401], 503: ERRORS[400]},
     )

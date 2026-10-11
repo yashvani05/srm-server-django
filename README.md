@@ -1,11 +1,54 @@
 # Service Request Management System
 
 Internal tool for submitting and tracking service requests (IT, Maintenance, General).
-Stack: React 19 + Vite + Tailwind (client) · Node.js + Express + TypeScript + Sequelize (server) · PostgreSQL · Redis · BullMQ.
 
-> Status: Questions 1 and 2 implemented (API, UI, RBAC, Swagger docs, Redis dashboard cache, BullMQ overdue worker).
+**Two interchangeable backends serve the same React app and the same API (`/api/v1`):**
 
-## Prerequisites
+| Backend | Folder | Stack | Use it when |
+|---|---|---|---|
+| **Django (primary)** | [`server-django/`](server-django/) | Python, Django 5, Django REST Framework, Celery + Celery Beat, PostgreSQL, Redis | The client brief asks for Django. **This is the one to run and demo.** |
+| Node (reference) | [`server/`](server/) | Node.js, Express, TypeScript, Sequelize, BullMQ, PostgreSQL, Redis | The first implementation; unchanged, kept for reference. The sections further down describe it. |
+
+Frontend: React 19 + Vite + Tailwind (`client/`), unchanged for both.
+
+> Status: Questions 1 and 2 implemented (API, UI, RBAC, Swagger docs, Redis dashboard cache, overdue background job) in both backends.
+
+## Quick start: Django backend (primary)
+
+Prerequisites: Python 3.10+, Node 20+, PostgreSQL running locally, Redis (Docker is the easiest way).
+
+```bash
+# 1. Redis (from the repo root)
+docker compose up -d redis
+
+# 2. Backend setup (once)
+createdb srm_django
+cd server-django
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # edit DB_USER / DB_PASSWORD for your local Postgres
+python manage.py migrate      # creates tables + ADMIN / EMPLOYEE role groups
+python manage.py seed_demo    # demo users (see SEED_* in .env.example) + 12 sample requests
+
+# 3. Run (three terminals)
+python manage.py runserver 8000                   # API   -> http://localhost:8000/api/v1   (in server-django/)
+celery -A config worker -B -l info --pool=solo    # overdue worker + scheduler               (in server-django/)
+cd client && npm install && VITE_PROXY_TARGET=http://localhost:8000 npm run dev   # UI -> http://localhost:5173
+```
+
+| What | Where / command |
+|---|---|
+| Swagger UI (HTTP Basic auth: `SWAGGER_USER` / `SWAGGER_PASS`) | http://localhost:8000/api-docs/ |
+| Django admin | http://localhost:8000/admin/ |
+| Tests | `cd server-django && python manage.py test` |
+| Run the overdue check once, right now | `python manage.py run_overdue_check` |
+| Health | `GET /api/v1/health` |
+
+How it maps to the requirements: roles are Django Groups + Permissions (`accounts/roles.py`); the dashboard summary is cached in Redis for 60 s and cleared on every write (`dashboard/`); the overdue job is a Celery task (`service_requests/tasks.py`) scheduled by Celery Beat every 60 s, flags requests that have been OPEN / IN_PROGRESS for more than 24 h in their current status, and records the last success time (`system_state`). New to Django? Open [docs/learn-django.html](docs/learn-django.html). A full technical handover is in [handover/](handover/PROJECT_HANDOVER.md).
+
+> The rest of this README (from "Prerequisites" down) documents the **Node** backend in `server/`. The API contract, roles, overdue rule and dashboard behaviour it describes are the same in Django.
+
+## Prerequisites (Node backend)
 - Node.js 20+ (developed on 22)
 - PostgreSQL running locally (developed on 14)
 - Docker (only for Redis, or for Postgres too if you don't have it locally)

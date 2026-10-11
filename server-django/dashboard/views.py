@@ -10,12 +10,12 @@ from . import cache, services
 
 
 class SummarySerializer(serializers.Serializer):
-    total = serializers.IntegerField()
-    open = serializers.IntegerField()
-    inProgress = serializers.IntegerField()
-    resolved = serializers.IntegerField()
-    highPriority = serializers.IntegerField()
-    overdue = serializers.IntegerField()
+    totalRequests = serializers.IntegerField()
+    openRequests = serializers.IntegerField()
+    inProgressRequests = serializers.IntegerField()
+    resolvedRequests = serializers.IntegerField()
+    highPriorityRequests = serializers.IntegerField()
+    overdueRequests = serializers.IntegerField()
     lastOverdueCheckAt = serializers.DateTimeField(allow_null=True)
 
 
@@ -30,6 +30,6 @@ class SummaryView(APIView):
         if not hit:
             summary = services.build_summary()
             cache.put(summary)
-        data = {**summary, "lastOverdueCheckAt": SummarySerializer().fields["lastOverdueCheckAt"].to_representation(services.last_overdue_check_at())
-                if services.last_overdue_check_at() else None}
+        last_check = services.last_overdue_check_at()
+        data = {**summary, "lastOverdueCheckAt": SummarySerializer().fields["lastOverdueCheckAt"].to_representation(last_check) if last_check else None}
         return success("Dashboard summary retrieved", data, headers={"X-Cache": "HIT" if hit else "MISS"})

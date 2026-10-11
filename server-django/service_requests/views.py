@@ -35,7 +35,7 @@ class RequestCollectionView(APIView):
         return [require_permission("requests.create" if self.request.method == "POST" else "requests.read")()]
 
     @extend_schema(
-        tags=["Service requests"], summary="List service requests",
+        tags=["Service Requests"], summary="List service requests",
         parameters=[OpenApiParameter("status", str), OpenApiParameter("priority", str), OpenApiParameter("overdue", bool),
                     OpenApiParameter("page", int), OpenApiParameter("limit", int)],
         responses={200: Page, 400: ERRORS[400], 401: ERRORS[401], 403: ERRORS[403]},
@@ -49,10 +49,10 @@ class RequestCollectionView(APIView):
         pages = -(-total // q["limit"])
         return success("Service requests retrieved", {
             "items": ServiceRequestSerializer(items, many=True).data,
-            "pagination": {"page": q["page"], "limit": q["limit"], "total": total, "totalPages": pages},
+            "pagination": {"page": q["page"], "limit": q["limit"], "totalItems": total, "totalPages": pages},
         })
 
-    @extend_schema(tags=["Service requests"], summary="Create a service request", request=RequestFieldsSerializer,
+    @extend_schema(tags=["Service Requests"], summary="Create a service request", request=RequestFieldsSerializer,
                    responses={201: Item, 400: ERRORS[400], 401: ERRORS[401], 403: ERRORS[403]})
     def post(self, request):
         data = _body(StrictRequestFieldsSerializer, request.data)
@@ -65,12 +65,12 @@ class RequestDetailView(APIView):
         perm = {"GET": "requests.read", "PATCH": "requests.update", "DELETE": "requests.delete"}[self.request.method]
         return [require_permission(perm)()]
 
-    @extend_schema(tags=["Service requests"], summary="Get one service request",
+    @extend_schema(tags=["Service Requests"], summary="Get one service request",
                    responses={200: Item, 400: ERRORS[400], 401: ERRORS[401], 403: ERRORS[403], 404: ERRORS[404]})
     def get(self, request, pk):
         return success("Service request retrieved", ServiceRequestSerializer(services.get_request(request.user, _check_id(pk))).data)
 
-    @extend_schema(tags=["Service requests"], summary="Edit a service request", request=RequestFieldsSerializer,
+    @extend_schema(tags=["Service Requests"], summary="Edit a service request", request=RequestFieldsSerializer,
                    responses={200: Item, 400: ERRORS[400], 401: ERRORS[401], 403: ERRORS[403], 404: ERRORS[404]})
     def patch(self, request, pk):
         pk = _check_id(pk)
@@ -79,7 +79,7 @@ class RequestDetailView(APIView):
             data.pop("priority", None)  # partial update: don't reset an unsent priority to its default
         return success("Service request updated", ServiceRequestSerializer(services.update_request(request.user, pk, data)).data)
 
-    @extend_schema(tags=["Service requests"], summary="Delete a service request (admin only)",
+    @extend_schema(tags=["Service Requests"], summary="Delete a service request (admin only)",
                    responses={200: Empty, 400: ERRORS[400], 401: ERRORS[401], 403: ERRORS[403], 404: ERRORS[404]})
     def delete(self, request, pk):
         services.delete_request(request.user, _check_id(pk))
@@ -90,7 +90,7 @@ class RequestStatusView(APIView):
     def get_permissions(self):
         return [require_permission("requests.status.update")()]
 
-    @extend_schema(tags=["Service requests"], summary="Change status (admin only)", request=StatusInputSerializer,
+    @extend_schema(tags=["Service Requests"], summary="Change status (admin only)", request=StatusInputSerializer,
                    responses={200: Item, 400: ERRORS[400], 401: ERRORS[401], 403: ERRORS[403], 404: ERRORS[404]})
     def patch(self, request, pk):
         pk = _check_id(pk)

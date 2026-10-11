@@ -89,8 +89,8 @@ class RequestTests(ApiTestCase):
         self.make(self.emp, status="RESOLVED", priority="HIGH")
         admin = self.client_for("admin@t.com")
         page = admin.get(f"{BASE}/requests?limit=2&page=3").json()["data"]
-        self.assertEqual((len(page["items"]), page["pagination"]["total"], page["pagination"]["totalPages"]), (2, 6, 3))
-        self.assertEqual(admin.get(f"{BASE}/requests?status=resolved").json()["data"]["pagination"]["total"], 1)
+        self.assertEqual((len(page["items"]), page["pagination"]["totalItems"], page["pagination"]["totalPages"]), (2, 6, 3))
+        self.assertEqual(admin.get(f"{BASE}/requests?status=resolved").json()["data"]["pagination"]["totalItems"], 1)
         self.assertEqual(admin.get(f"{BASE}/requests?limit=500").status_code, 400)
 
 
@@ -133,9 +133,9 @@ class DashboardTests(ApiTestCase):
         first = admin.get(f"{BASE}/dashboard/summary")
         self.assertEqual(first.headers["X-Cache"], "MISS")
         data = first.json()["data"]
-        self.assertEqual((data["total"], data["open"], data["resolved"], data["overdue"]), (2, 1, 1, 1))
+        self.assertEqual((data["totalRequests"], data["openRequests"], data["resolvedRequests"], data["overdueRequests"]), (2, 1, 1, 1))
         self.assertIsNotNone(data["lastOverdueCheckAt"])
         self.assertEqual(admin.get(f"{BASE}/dashboard/summary").headers["X-Cache"], "HIT")
         admin.post(f"{BASE}/requests", VALID, format="json")  # a write must drop the cached summary
         again = admin.get(f"{BASE}/dashboard/summary")
-        self.assertEqual((again.headers["X-Cache"], again.json()["data"]["total"]), ("MISS", 3))
+        self.assertEqual((again.headers["X-Cache"], again.json()["data"]["totalRequests"]), ("MISS", 3))

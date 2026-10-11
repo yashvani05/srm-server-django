@@ -9,17 +9,14 @@ S = ServiceRequest.Status
 def build_summary() -> dict:
     """All counts come from ONE aggregate query."""
     counts = ServiceRequest.objects.aggregate(
-        total=Count("id"),
-        open=Count("id", filter=Q(status=S.OPEN)),
-        inProgress=Count("id", filter=Q(status=S.IN_PROGRESS)),
-        resolved=Count("id", filter=Q(status=S.RESOLVED)),
-        high=Count("id", filter=Q(priority=ServiceRequest.Priority.HIGH)),
-        overdue=Count("id", filter=Q(overdue=True)),
+        totalRequests=Count("id"),
+        openRequests=Count("id", filter=Q(status=S.OPEN)),
+        inProgressRequests=Count("id", filter=Q(status=S.IN_PROGRESS)),
+        resolvedRequests=Count("id", filter=Q(status=S.RESOLVED)),
+        highPriorityRequests=Count("id", filter=Q(priority=ServiceRequest.Priority.HIGH)),
+        overdueRequests=Count("id", filter=Q(overdue=True)),
     )
-    return {
-        "total": counts["total"], "open": counts["open"], "inProgress": counts["inProgress"],
-        "resolved": counts["resolved"], "highPriority": counts["high"], "overdue": counts["overdue"],
-    }
+    return counts
 
 
 def last_overdue_check_at():

@@ -1,12 +1,3 @@
-"""
-Business logic for service requests, kept apart from the views (which only translate HTTP to and from these functions).
-
-Rules enforced here:
-  * ADMIN sees and edits everything; EMPLOYEE sees only their own requests (anyone else's looks like a 404).
-  * An employee may edit only while the request is OPEN.
-  * Changing the status restarts the overdue clock and clears the overdue flag immediately.
-  * Every write clears the cached dashboard summary.
-"""
 from django.db.models.functions import Now
 from rest_framework.exceptions import NotFound, PermissionDenied
 
@@ -34,8 +25,8 @@ def list_requests(user, *, status=None, priority=None, overdue=None, page=1, lim
     if priority:
         queryset = queryset.filter(priority=priority)
     if overdue:
-        queryset = queryset.filter(overdue=True)  # the flag maintained by the overdue worker
-    queryset = queryset.order_by("-created_at", "-id")  # newest first; id breaks ties so pages stay stable
+        queryset = queryset.filter(overdue=True)
+    queryset = queryset.order_by("-created_at", "-id")
     total = queryset.count()
     offset = (page - 1) * limit
     return list(queryset[offset:offset + limit]), total
@@ -43,7 +34,7 @@ def list_requests(user, *, status=None, priority=None, overdue=None, page=1, lim
 
 def get_request(user, pk) -> ServiceRequest:
     request = _visible_to(user).filter(pk=pk).first()
-    if request is None:  # missing, or someone else's: same answer, so existence is never leaked
+    if request is None:
         raise NotFound("Service request not found")
     return request
 
@@ -68,13 +59,13 @@ def update_request(user, pk, data: dict) -> ServiceRequest:
 def change_status(user, pk, status: str) -> ServiceRequest:
     request = get_request(user, pk)
     if request.status == status:
-        return request  # nothing changed, so the overdue clock and the cache are left alone
+        return request
     request.status = status
-    request.status_changed_at = Now()  # a new status starts a new 24-hour clock...
-    request.overdue = False            # ...so any overdue flag is cleared right away
+    request.status_changed_at = Now()
+    request.overdue = False
     request.overdue_at = None
     request.save(update_fields=["status", "status_changed_at", "overdue", "overdue_at", "updated_at"])
-    request.refresh_from_db()  # status_changed_at was set by the database
+    request.refresh_from_db()
     dashboard_cache.invalidate()
     return request
 

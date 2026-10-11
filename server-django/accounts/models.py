@@ -12,7 +12,6 @@ class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def create_user(self, email, name, password=None, role=roles.EMPLOYEE, **extra):
-        """Creates a user and puts them in their role's Group (that is what grants their permissions)."""
         user = self.model(email=email.strip().lower(), name=name.strip(), is_staff=(role == roles.ADMIN), **extra)
         user.set_password(password)
         user.save(using=self._db)
@@ -20,18 +19,17 @@ class UserManager(BaseUserManager):
         user.groups.add(group)
         return user
 
-    def create_superuser(self, email, name, password=None, **extra):  # used by `manage.py createsuperuser`
+    def create_superuser(self, email, name, password=None, **extra):
         return self.create_user(email, name, password, role=roles.ADMIN, is_superuser=True, **extra)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """An employee or admin. Logs in with their email address."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=255, unique=True)  # stored lower-case; also unique case-insensitively below
+    email = models.EmailField(max_length=255, unique=True)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)  # may use the Django admin site (/admin/)
+    is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -52,6 +50,5 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def api_permissions(self) -> list[str]:
-        """The API-style permission names this user holds, in a stable order."""
         held = self.get_all_permissions()
         return [api for api, django_perm in roles.API_PERMISSIONS.items() if django_perm in held]

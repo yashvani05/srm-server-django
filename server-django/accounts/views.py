@@ -48,7 +48,7 @@ class RegisterView(APIView):
             raise Conflict("An account with this email already exists")
         try:
             user = User.objects.create_user(email=email, name=data.validated_data["name"], password=data.validated_data["password"])
-        except IntegrityError:  # two sign-ups at the same instant: the database constraint catches the loser
+        except IntegrityError:
             raise Conflict("An account with this email already exists")
         return success("Registration successful", _auth_result(user), status=201)
 
@@ -67,7 +67,6 @@ class LoginView(APIView):
         data = LoginSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         user = User.objects.filter(email__iexact=data.validated_data["email"].strip()).first()
-        # Always run one password check, even for an unknown email, so timing does not reveal which emails exist.
         password_ok = check_password(data.validated_data["password"], user.password if user else _dummy_hash())
         if not user or not user.is_active or not password_ok:
             raise AuthenticationFailed("Invalid email or password")

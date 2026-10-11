@@ -1,4 +1,3 @@
-"""Creating and checking login tokens (JWT, HS256). A token carries who you are (sub), a unique id (jti) and an expiry."""
 import time
 import uuid
 
@@ -17,7 +16,6 @@ def issue_token(user) -> str:
 
 def decode_token(token: str) -> dict:
     try:
-        # `algorithms` is pinned on purpose: it is what rejects forged "alg: none" tokens.
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[ALGORITHM], options={"require": ["exp", "sub", "jti"]})
     except jwt.ExpiredSignatureError:
         raise AuthenticationFailed("Token expired")

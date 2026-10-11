@@ -9,7 +9,6 @@ from accounts.roles import ADMIN, EMPLOYEE
 from dashboard import cache
 from service_requests.models import ServiceRequest
 
-# (title, category, priority, status, age in hours, owner, description)
 SAMPLES = [
     ("Laptop screen flickers on battery", "IT", "HIGH", "OPEN", 30, "employee", "The screen flickers whenever the laptop is unplugged. Started after the last Windows update."),
     ("VPN disconnects every few minutes", "IT", "HIGH", "IN_PROGRESS", 52, "employee", "Working from home, the VPN drops roughly every 5 minutes and I have to reconnect manually."),

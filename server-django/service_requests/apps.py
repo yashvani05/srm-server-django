@@ -3,7 +3,6 @@ from django.db.models.signals import post_migrate
 
 
 def sync_role_groups(sender, **kwargs):
-    """After migrating, make sure the ADMIN / EMPLOYEE groups exist and hold exactly the permissions in roles.py."""
     if sender.label != "service_requests":
         return
     from django.contrib.auth.models import Group, Permission

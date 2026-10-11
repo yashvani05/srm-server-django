@@ -76,7 +76,7 @@ class RequestDetailView(APIView):
         pk = _check_id(pk)
         data = _body(StrictRequestFieldsSerializer, request.data, partial=True)
         if "priority" not in request.data:
-            data.pop("priority", None)  # partial update: don't reset an unsent priority to its default
+            data.pop("priority", None)
         return success("Service request updated", ServiceRequestSerializer(services.update_request(request.user, pk, data)).data)
 
     @extend_schema(tags=["Service Requests"], summary="Delete a service request (admin only)",

@@ -1,4 +1,3 @@
-"""Redis cache for the dashboard summary. A cache problem must never break the dashboard, so every call is tolerant."""
 import logging
 
 from django.conf import settings

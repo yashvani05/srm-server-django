@@ -11,7 +11,6 @@ urlpatterns = [
     path("api/v1/", include("accounts.urls")),
     path("api/v1/", include("service_requests.urls")),
     path("api/v1/", include("dashboard.urls")),
-    # Swagger UI + raw OpenAPI document, both behind HTTP Basic auth
     path("api-docs.json", basic_auth_required(SpectacularAPIView.as_view(authentication_classes=[], permission_classes=[])), name="schema"),
     path("api-docs/", basic_auth_required(SpectacularSwaggerView.as_view(url_name="schema", authentication_classes=[], permission_classes=[]))),
     re_path(r"^api/.*$", api_not_found),

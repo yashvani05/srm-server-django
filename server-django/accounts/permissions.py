@@ -4,10 +4,6 @@ from .roles import API_PERMISSIONS
 
 
 def require_permission(api_permission: str):
-    """
-    Builds a DRF permission class: `permission_classes = [require_permission("requests.delete")]`.
-    The check is Django's own `user.has_perm(...)`, backed by the user's role Group in the database.
-    """
     django_permission = API_PERMISSIONS[api_permission]
 
     class HasPermission(BasePermission):

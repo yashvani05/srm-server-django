@@ -1,7 +1,3 @@
-"""
-Real logout. A JWT cannot be "un-issued", so on logout we remember its id (jti) in Redis until it would have
-expired anyway, and every request checks that list first. Redis deletes each entry by itself when its timer runs out.
-"""
 import logging
 import time
 
@@ -26,6 +22,5 @@ def is_denied(jti: str) -> bool:
     try:
         return cache.get(_key(jti)) is not None
     except Exception:
-        # Fail closed: if we cannot confirm the token was not revoked, we do not let it through.
         logger.exception("Token denylist (Redis) unavailable")
         raise ServiceUnavailable("Authentication service temporarily unavailable")

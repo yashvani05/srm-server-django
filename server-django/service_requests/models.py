@@ -7,7 +7,6 @@ from django.utils import timezone
 
 
 class ServiceRequest(models.Model):
-    """One request an employee has raised (IT support, maintenance, general help)."""
 
     class Category(models.TextChoices):
         IT = "IT", "IT"
@@ -31,9 +30,7 @@ class ServiceRequest(models.Model):
     priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.MEDIUM)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
 
-    # When the *current* status began. The 24-hour overdue clock runs from here, and restarts on every status change.
     status_changed_at = models.DateTimeField(default=timezone.now)
-    # Maintained by the overdue worker (and cleared immediately whenever the status changes).
     overdue = models.BooleanField(default=False)
     overdue_at = models.DateTimeField(null=True, blank=True)
 
@@ -43,25 +40,23 @@ class ServiceRequest(models.Model):
 
     class Meta:
         db_table = "service_requests"
-        default_permissions = ()  # we define our own, below
+        default_permissions = ()
         permissions = [
             ("read_requests", "Can read service requests"),
             ("create_requests", "Can create service requests"),
             ("update_requests", "Can edit service requests"),
             ("delete_requests", "Can delete service requests"),
             ("update_request_status", "Can change a request's status"),
-            ("read_dashboard", "Can read the dashboard summary"),  # kept here so one model owns all permissions
+            ("read_dashboard", "Can read the dashboard summary"),
         ]
         indexes = [
             models.Index(fields=["status"], name="sr_status_idx"),
             models.Index(fields=["priority"], name="sr_priority_idx"),
             models.Index(fields=["-created_at"], name="sr_created_at_idx"),
-            # The worker scans only open / in-progress rows that are not flagged yet.
             models.Index(
                 fields=["status_changed_at"], name="sr_overdue_candidates_idx",
                 condition=Q(status__in=["OPEN", "IN_PROGRESS"], overdue=False),
             ),
-            # Dashboard count and the ?overdue=true filter.
             models.Index(fields=["-created_at"], name="sr_overdue_idx", condition=Q(overdue=True)),
         ]
         constraints = [
@@ -75,7 +70,6 @@ class ServiceRequest(models.Model):
 
 
 class SystemState(models.Model):
-    """A tiny key/value table for facts about the system itself, e.g. when the overdue job last succeeded."""
 
     key = models.CharField(max_length=100, primary_key=True)
     value = models.TextField()

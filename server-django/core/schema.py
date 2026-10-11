@@ -1,4 +1,3 @@
-"""Helpers that describe our response envelope to the Swagger generator (drf-spectacular)."""
 from functools import lru_cache
 
 from rest_framework import serializers
@@ -24,7 +23,6 @@ class PaginationSerializer(serializers.Serializer):
 
 @lru_cache(maxsize=None)
 def envelope(name: str, data_serializer=None, many: bool = False):
-    """A serializer class for `{ success, message, data: <data_serializer> }`, named so Swagger lists it nicely."""
     data = data_serializer(many=many) if data_serializer else serializers.JSONField(allow_null=True)
     return type(name, (serializers.Serializer,), {
         "success": serializers.BooleanField(default=True),
@@ -33,7 +31,6 @@ def envelope(name: str, data_serializer=None, many: bool = False):
     })
 
 
-# The error responses every protected endpoint can return, reused in @extend_schema(responses=...)
 ERRORS = {
     400: ErrorEnvelopeSerializer,
     401: ErrorEnvelopeSerializer,

@@ -1,9 +1,3 @@
-"""
-The one response format the whole API speaks (the React app depends on it):
-
-    success:  { "success": true,  "message": "...", "data": ... }
-    failure:  { "success": false, "message": "...", "errors": [ { "field": "...", "message": "..." } ] }
-"""
 from rest_framework.response import Response
 
 

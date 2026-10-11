@@ -7,7 +7,6 @@ S = ServiceRequest.Status
 
 
 def build_summary() -> dict:
-    """All counts come from ONE aggregate query."""
     counts = ServiceRequest.objects.aggregate(
         totalRequests=Count("id"),
         openRequests=Count("id", filter=Q(status=S.OPEN)),
@@ -20,6 +19,5 @@ def build_summary() -> dict:
 
 
 def last_overdue_check_at():
-    """Read fresh every time (never cached) so the dashboard shows when the worker really last succeeded."""
     state = SystemState.objects.filter(key=STATE_KEY).first()
     return state.updated_at if state else None

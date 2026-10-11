@@ -1,7 +1,3 @@
-"""
-Turns every error into the standard failure envelope, and never leaks internals (stack traces, SQL) to clients.
-Views simply `raise NotFound(...)`, `raise PermissionDenied(...)` etc.; this module decides what the client sees.
-"""
 import logging
 
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
@@ -25,7 +21,6 @@ class ServiceUnavailable(exceptions.APIException):
 
 
 def _flatten(detail, prefix: str = ""):
-    """Turns DRF's nested validation errors into a flat list of (field, message)."""
     if isinstance(detail, dict):
         for key, value in detail.items():
             yield from _flatten(value, f"{prefix}.{key}" if prefix else str(key))
@@ -37,16 +32,15 @@ def _flatten(detail, prefix: str = ""):
 
 
 def api_exception_handler(exc, context):
-    # Normalise Django's own exceptions into DRF ones first.
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
     elif isinstance(exc, DjangoPermissionDenied):
         exc = exceptions.PermissionDenied()
 
-    from rest_framework.views import exception_handler  # imported here to avoid a circular import at startup
+    from rest_framework.views import exception_handler
 
-    response = exception_handler(exc, context)  # DRF builds the status code and headers (e.g. WWW-Authenticate)
-    if response is None:  # an unexpected bug: log it, tell the client nothing
+    response = exception_handler(exc, context)
+    if response is None:
         logger.exception("Unhandled error", exc_info=exc)
         return Response(error_body("Internal server error"), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -70,6 +64,6 @@ def api_exception_handler(exc, context):
     else:
         body = error_body("Request failed")
     if isinstance(exc, (exceptions.AuthenticationFailed, exceptions.NotAuthenticated)):
-        response.status_code = status.HTTP_401_UNAUTHORIZED  # DRF downgrades to 403 when a view has no auth header to offer
+        response.status_code = status.HTTP_401_UNAUTHORIZED
     response.data = body
     return response

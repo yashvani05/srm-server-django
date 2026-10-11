@@ -6,7 +6,6 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    """Lets an admin look at and manage users at /admin/ (handy for exploring the data while learning)."""
 
     ordering = ("email",)
     list_display = ("email", "name", "is_active", "is_staff", "created_at")

@@ -2,7 +2,6 @@ from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 
 class JWTAuthenticationScheme(OpenApiAuthenticationExtension):
-    """Tells Swagger that our custom authentication class is a Bearer JWT (adds the Authorize button)."""
 
     target_class = "accounts.authentication.JWTAuthentication"
     name = "bearerAuth"

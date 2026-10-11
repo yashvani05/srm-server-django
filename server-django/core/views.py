@@ -31,7 +31,6 @@ class HealthView(APIView):
 
 
 def api_not_found(request, *args, **kwargs):
-    """JSON 404 for any unknown /api/... URL (Django would otherwise answer with an HTML page)."""
     return JsonResponse(error_body(f"Route not found: {request.method} {request.get_full_path()}"), status=404)
 
 

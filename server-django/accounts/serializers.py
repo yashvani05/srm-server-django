@@ -4,7 +4,6 @@ from .models import User
 
 
 class RegisterSerializer(serializers.Serializer):
-    """Any `role` sent by the client is simply ignored: public sign-ups are always employees."""
 
     name = serializers.CharField(min_length=2, max_length=100)
     email = serializers.EmailField(max_length=255)

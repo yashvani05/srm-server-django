@@ -18,7 +18,7 @@ VALID = {"title": "Broken monitor", "description": "Screen is dead", "category":
 class ApiTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("migrate", verbosity=0)  # makes sure role groups are synced
+        call_command("migrate", verbosity=0)
         cls.admin = User.objects.create_user("admin@t.com", "Admin", "Passw0rd!", ADMIN)
         cls.emp = User.objects.create_user("emp@t.com", "Emp", "Passw0rd!", EMPLOYEE)
         cls.other = User.objects.create_user("other@t.com", "Other", "Passw0rd!", EMPLOYEE)
@@ -102,7 +102,7 @@ class OverdueTests(ApiTestCase):
         resolved = self.make(hours=100, status="RESOLVED")
         first = run_overdue_check()
         self.assertEqual(first.marked, 2)
-        self.assertEqual(run_overdue_check().marked, 0)  # idempotent
+        self.assertEqual(run_overdue_check().marked, 0)
         flags = {r.pk: r.overdue for r in ServiceRequest.objects.all()}
         self.assertEqual((flags[old_open.pk], flags[old_progress.pk], flags[fresh.pk], flags[resolved.pk]), (True, True, False, False))
         self.assertTrue(SystemState.objects.filter(key="overdue_check.last_success_at").exists())
@@ -115,7 +115,7 @@ class OverdueTests(ApiTestCase):
         self.assertFalse(r["isOverdue"])
         run_overdue_check()
         req.refresh_from_db()
-        self.assertFalse(req.overdue)  # clock restarted, so not overdue again yet
+        self.assertFalse(req.overdue)
 
     def test_stale_flag_is_healed(self):
         req = self.make(hours=50, status="RESOLVED", overdue=True, overdue_at=timezone.now())
@@ -136,6 +136,6 @@ class DashboardTests(ApiTestCase):
         self.assertEqual((data["totalRequests"], data["openRequests"], data["resolvedRequests"], data["overdueRequests"]), (2, 1, 1, 1))
         self.assertIsNotNone(data["lastOverdueCheckAt"])
         self.assertEqual(admin.get(f"{BASE}/dashboard/summary").headers["X-Cache"], "HIT")
-        admin.post(f"{BASE}/requests", VALID, format="json")  # a write must drop the cached summary
+        admin.post(f"{BASE}/requests", VALID, format="json")
         again = admin.get(f"{BASE}/dashboard/summary")
         self.assertEqual((again.headers["X-Cache"], again.json()["data"]["totalRequests"]), ("MISS", 3))

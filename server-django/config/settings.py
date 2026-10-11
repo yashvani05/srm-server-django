@@ -1,9 +1,3 @@
-"""
-Django settings for the Service Request Management API.
-
-Everything that differs between machines (database, Redis, secrets) comes from environment variables,
-so the same code runs locally, in tests and in production. See `.env.example` for the full list.
-"""
 import os
 import sys
 from pathlib import Path
@@ -29,7 +23,7 @@ def env_int(name: str, default: int) -> int:
 
 
 DEBUG = env_bool("DJANGO_DEBUG", False)
-TESTING = "test" in sys.argv  # `python manage.py test` swaps Redis for an in-memory cache
+TESTING = "test" in sys.argv
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
@@ -40,7 +34,6 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = [h.strip() for h in env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,.trycloudflare.com").split(",") if h.strip()]
 
-# --- Applications -----------------------------------------------------------------------------------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -48,12 +41,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # third party
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
-    "drf_spectacular_sidecar",  # serves the Swagger UI files locally (no CDN needed)
-    # ours
+    "drf_spectacular_sidecar",
     "core",
     "accounts",
     "service_requests",
@@ -74,7 +65,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
-APPEND_SLASH = False  # the React app calls /requests, not /requests/
+APPEND_SLASH = False
 
 TEMPLATES = [
     {
@@ -91,9 +82,8 @@ TEMPLATES = [
     },
 ]
 
-# --- Database (PostgreSQL) ---------------------------------------------------------------------------------------
 DB_SSL = env_bool("DB_SSL", False)
-if env("DATABASE_URL"):  # hosted database: one connection string
+if env("DATABASE_URL"):
     DATABASES = {"default": dj_database_url.parse(env("DATABASE_URL"), conn_max_age=60, ssl_require=DB_SSL)}
 else:
     DATABASES = {
@@ -109,11 +99,9 @@ else:
     }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# --- Users -------------------------------------------------------------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
-AUTH_PASSWORD_VALIDATORS = []  # password rules are enforced by our own serializers (8-72 characters)
+AUTH_PASSWORD_VALIDATORS = []
 
-# --- Redis: cache (database 1) and Celery broker (database 2) ----------------------------------------------------
 REDIS_URL = env("REDIS_URL", "redis://localhost:6379").rstrip("/")
 
 if TESTING:
@@ -124,7 +112,7 @@ else:
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": f"{REDIS_URL}/1",
             "KEY_PREFIX": "srmdj",
-            "KEY_FUNCTION": "core.cache.make_key",  # keys look like  srmdj:dashboard:summary
+            "KEY_FUNCTION": "core.cache.make_key",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 "SOCKET_CONNECT_TIMEOUT": 2,
@@ -135,12 +123,10 @@ else:
 
 DASHBOARD_CACHE_TTL_SECONDS = env_int("DASHBOARD_CACHE_TTL_SECONDS", 60)
 
-# --- Authentication (JWT) ----------------------------------------------------------------------------------------
 JWT_SECRET = env("JWT_SECRET") or SECRET_KEY
 JWT_EXPIRES_SECONDS = env_int("JWT_EXPIRES_SECONDS", 3600)
-LOGIN_RATE_LIMIT_MAX = env_int("LOGIN_RATE_LIMIT_MAX", 10)  # attempts per IP per 15 minutes
+LOGIN_RATE_LIMIT_MAX = env_int("LOGIN_RATE_LIMIT_MAX", 10)
 
-# --- Django REST Framework ---------------------------------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["accounts.authentication.JWTAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
@@ -148,15 +134,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "EXCEPTION_HANDLER": "core.exceptions.api_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%fZ",  # same ISO format the React app already expects
+    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S.%fZ",
     "DEFAULT_THROTTLE_RATES": {"login": f"{LOGIN_RATE_LIMIT_MAX}/15min"},
-    "NUM_PROXIES": env_int("TRUST_PROXY", 0),  # reverse-proxy hops to trust when reading the client IP
+    "NUM_PROXIES": env_int("TRUST_PROXY", 0),
     "UNAUTHENTICATED_USER": None,
 }
 
 CORS_ALLOWED_ORIGINS = [o.strip() for o in env("CORS_ORIGIN", "http://localhost:5173").split(",") if o.strip()]
 
-# --- Swagger / OpenAPI -------------------------------------------------------------------------------------------
 SWAGGER_USER = env("SWAGGER_USER", "apidocs")
 SWAGGER_PASS = env("SWAGGER_PASS")
 if not SWAGGER_PASS:
@@ -195,11 +180,10 @@ SPECTACULAR_SETTINGS = {
     ],
 }
 
-# --- Celery (background worker + scheduler) ----------------------------------------------------------------------
 OVERDUE_CHECK_INTERVAL_SECONDS = env_int("OVERDUE_CHECK_INTERVAL_SECONDS", 60)
 
 CELERY_BROKER_URL = f"{REDIS_URL}/2"
-CELERY_TASK_IGNORE_RESULT = True  # nobody reads task results; the job records its own success time in the database
+CELERY_TASK_IGNORE_RESULT = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TIMEZONE = "UTC"
 CELERY_BEAT_SCHEDULE = {
@@ -209,9 +193,8 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 if TESTING:
-    CELERY_TASK_ALWAYS_EAGER = True  # run tasks inline in tests, no broker needed
+    CELERY_TASK_ALWAYS_EAGER = True
 
-# --- Internationalisation / static files -------------------------------------------------------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = False
@@ -229,4 +212,4 @@ LOGGING = {
 }
 
 if TESTING:
-    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]  # fast hashing keeps the test suite quick
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

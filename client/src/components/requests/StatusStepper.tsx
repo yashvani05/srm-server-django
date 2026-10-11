@@ -3,7 +3,6 @@ import type { RequestStatus } from '../../types/request';
 import { cn } from '../../utils/cn';
 import { Icon } from '../ui/Icon';
 
-/** Open → In Progress → Resolved, with finished steps ticked and the current one highlighted. */
 export function StatusStepper({ status }: { status: RequestStatus }) {
   const current = STATUS_OPTIONS.findIndex((s) => s.value === status);
 

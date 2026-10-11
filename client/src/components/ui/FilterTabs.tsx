@@ -7,7 +7,6 @@ interface FilterTabsProps<T extends string> {
   onChange: (value: T | undefined) => void;
 }
 
-/** Segmented single-choice filter (a pressed-button group, so it is also keyboard and screen-reader friendly). */
 export function FilterTabs<T extends string>({ label, options, value, onChange }: FilterTabsProps<T>) {
   return (
     <div role="group" aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-md bg-gray-100 p-0.5">

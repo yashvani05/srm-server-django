@@ -5,7 +5,6 @@ import { ApiError } from './ApiError';
 
 export const AUTH_EXPIRED_EVENT = 'auth:expired';
 
-// Credential endpoints legitimately answer 401 ("wrong password"); that is not an expired session.
 const isCredentialCall = (url?: string) => /\/auth\/(login|register)$/.test(url ?? '');
 
 export const api = axios.create({
@@ -36,7 +35,6 @@ api.interceptors.response.use(
   },
 );
 
-/** Unwraps the `{ success, message, data }` envelope. */
 export async function unwrap<T>(promise: Promise<{ data: ApiEnvelope<T> }>): Promise<T> {
   return (await promise).data.data;
 }

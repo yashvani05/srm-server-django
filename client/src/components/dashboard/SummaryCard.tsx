@@ -7,9 +7,7 @@ interface SummaryCardProps {
   value: number;
   caption: string;
   icon: IconName;
-  /** Important metrics (high priority, overdue) get an accent edge, and a red value when non-zero. */
   emphasis?: boolean;
-  /** Links to the pre-filtered request list when provided. */
   to?: string;
 }
 

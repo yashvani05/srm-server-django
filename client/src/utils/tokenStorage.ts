@@ -1,6 +1,5 @@
 const KEY = 'srm.token';
 
-// Storage can throw (private mode, blocked site data), so every access is guarded.
 export const tokenStorage = {
   get(): string | null {
     try {
@@ -12,15 +11,11 @@ export const tokenStorage = {
   set(token: string): void {
     try {
       localStorage.setItem(KEY, token);
-    } catch {
-      /* session will simply not survive a reload */
-    }
+    } catch {}
   },
   clear(): void {
     try {
       localStorage.removeItem(KEY);
-    } catch {
-      /* nothing to clear */
-    }
+    } catch {}
   },
 };

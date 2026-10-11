@@ -7,7 +7,6 @@ const SEGMENTS = [
   { key: 'resolvedRequests', label: 'Resolved', bar: 'bg-green-600' },
 ] as const;
 
-/** How the total splits across the three statuses, as one stacked bar plus a legend. */
 export function StatusBreakdown({ summary }: { summary: DashboardSummary }) {
   const total = summary.totalRequests;
   const pct = (n: number) => (total ? Math.round((n / total) * 100) : 0);

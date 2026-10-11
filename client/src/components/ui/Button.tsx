@@ -8,13 +8,11 @@ export type Size = 'sm' | 'md';
 interface ButtonProps extends ComponentProps<'button'> {
   variant?: Variant;
   size?: Size;
-  /** Shows a spinner and swaps the label for `loadingText` (e.g. "Saving..."). */
   loading?: boolean;
   loadingText?: string;
 }
 
 const variants: Record<Variant, string> = {
-  // Light, friendly call-to-action: soft sky fill with deep text (high contrast, no dark navy).
   primary: 'bg-sky-300 text-sky-950 shadow-sm hover:bg-sky-400 focus-visible:ring-sky-500',
   secondary: 'border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 focus-visible:ring-gray-500',
   danger: 'bg-accent-600 text-white hover:bg-accent-700 focus-visible:ring-accent-600',

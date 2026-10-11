@@ -1,4 +1,3 @@
-/** Thin indeterminate bar for background refetches (filter / page changes) where the old rows stay visible. */
 export function TopProgress({ active }: { active: boolean }) {
   return (
     <div className="h-0.5 overflow-hidden" role={active ? 'progressbar' : undefined} aria-label={active ? 'Updating results' : undefined}>

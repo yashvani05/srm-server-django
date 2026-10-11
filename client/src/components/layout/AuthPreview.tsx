@@ -6,7 +6,6 @@ const STATS = [
   { label: 'Resolved', value: 3, tone: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-400' },
 ];
 
-/** Decorative mock of the dashboard for the landing banner (static, hidden from assistive technology). */
 export function AuthPreview() {
   return (
     <div className="relative mx-auto w-full max-w-md" aria-hidden="true">

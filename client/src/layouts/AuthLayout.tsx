@@ -33,7 +33,6 @@ function AuthTabs() {
 export function AuthLayout() {
   return (
     <div className="grid min-h-screen lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      {/* Banner (desktop) */}
       <aside className="auth-banner relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
         <Brand to="/login" />
         <div className="mx-auto w-full max-w-lg">
@@ -62,9 +61,7 @@ export function AuthLayout() {
         </div>
       </aside>
 
-      {/* Form side */}
       <main className="flex flex-col items-center justify-center bg-slate-50 px-4 py-10 sm:px-8">
-        {/* Compact banner (phones and tablets) */}
         <div className="auth-banner mb-6 w-full max-w-md rounded-2xl border border-white p-5 shadow-sm lg:hidden">
           <Brand to="/login" />
           <h2 className="mt-4 text-xl font-semibold leading-snug text-slate-900">{HEADLINE}</h2>

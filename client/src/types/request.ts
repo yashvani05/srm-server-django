@@ -9,9 +9,7 @@ export interface ServiceRequest {
   category: RequestCategory;
   priority: RequestPriority;
   status: RequestStatus;
-  /** OPEN/IN_PROGRESS for more than 24h in the current status (computed by the server). */
   isOverdue: boolean;
-  /** When the current status began. */
   statusChangedAt: string;
   createdAt: string;
   updatedAt: string;

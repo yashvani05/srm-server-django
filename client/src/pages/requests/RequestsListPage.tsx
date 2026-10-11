@@ -21,7 +21,6 @@ import type { RequestPriority, RequestStatus, ServiceRequest } from '../../types
 const STATUSES = STATUS_OPTIONS.map((o) => o.value);
 const PRIORITIES = PRIORITY_OPTIONS.map((o) => o.value);
 
-/** Reads a query-string value, ignoring anything that isn't a known option. */
 function oneOf<T extends string>(value: string | null, allowed: readonly T[]): T | undefined {
   return allowed.find((a) => a === value);
 }
@@ -37,7 +36,6 @@ export function RequestsListPage() {
   const { remove, pending } = useRequestActions();
   const [toDelete, setToDelete] = useState<ServiceRequest | null>(null);
 
-  // Filters and page live in the URL, so the view is shareable and survives refresh / back.
   const updateParams = useCallback(
     (next: { status?: RequestStatus; priority?: RequestPriority; overdue?: boolean; page?: number }, merge = true) => {
       setSearchParams(
@@ -55,7 +53,6 @@ export function RequestsListPage() {
     [setSearchParams],
   );
 
-  // If the last item on the last page is removed, step back to the new last page.
   useEffect(() => {
     if (data && data.items.length === 0 && page > 1) updateParams({ page: Math.max(1, data.pagination.totalPages) });
   }, [data, page, updateParams]);

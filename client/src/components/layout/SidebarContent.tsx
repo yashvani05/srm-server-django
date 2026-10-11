@@ -19,7 +19,6 @@ const initials = (name: string) =>
     .map((p) => p[0]!.toUpperCase())
     .join('');
 
-/** Brand, navigation and signed-in user. Shared by the desktop sidebar and the mobile drawer. */
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();

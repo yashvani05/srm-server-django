@@ -7,10 +7,6 @@ interface SegmentedRadioProps extends Omit<ComponentProps<'input'>, 'type' | 'va
   error?: string;
 }
 
-/**
- * Radio group styled as a segmented control. Spread react-hook-form's `register()` result onto it;
- * the native radios stay in the DOM (visually hidden) so keyboard and screen-reader behaviour is untouched.
- */
 export function SegmentedRadio({ label, options, error, className, ...inputProps }: SegmentedRadioProps) {
   return (
     <fieldset>

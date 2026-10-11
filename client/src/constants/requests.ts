@@ -25,5 +25,4 @@ export const CATEGORY_LABELS = Object.fromEntries(CATEGORY_OPTIONS.map((o) => [o
 
 export const PAGE_SIZE = 10;
 
-/** Mirrors the server's overdue threshold; used for display copy only. */
 export const OVERDUE_AFTER_HOURS = 24;

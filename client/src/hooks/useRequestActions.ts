@@ -7,10 +7,6 @@ import { useToast } from './useToast';
 type ActionKind = 'create' | 'update' | 'delete' | 'status';
 export type ActionResult<T> = { data: T; error?: undefined } | { data?: undefined; error: ApiError | Error };
 
-/**
- * Mutations with pending state and toasts. Each action resolves to `{ data }` or `{ error }`
- * (never throws), so callers can navigate on success and map field errors on failure.
- */
 export function useRequestActions() {
   const toast = useToast();
   const [pending, setPending] = useState<ActionKind | null>(null);

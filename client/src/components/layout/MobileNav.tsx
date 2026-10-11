@@ -4,7 +4,6 @@ import { Icon } from '../ui/Icon';
 import { Brand } from './Brand';
 import { SidebarContent } from './SidebarContent';
 
-/** Top bar + slide-in drawer, shown below the lg breakpoint. */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();

@@ -21,12 +21,10 @@ const ACTIONS: Record<RequestStatus, Action[]> = {
 
 interface StatusActionsProps {
   current: RequestStatus;
-  /** The status currently being applied, if a change is in flight. */
   updatingTo: RequestStatus | null;
   onChange: (status: RequestStatus) => void;
 }
 
-/** Admin-only: the sensible next steps for the current status as one-click buttons. */
 export function StatusActions({ current, updatingTo, onChange }: StatusActionsProps) {
   return (
     <div className="flex flex-wrap gap-2">

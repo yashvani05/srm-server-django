@@ -7,12 +7,10 @@ import { tokenStorage } from '../utils/tokenStorage';
 
 export interface AuthContextValue {
   user: User | null;
-  /** True while a stored token is being validated on first load. */
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
-  /** UI visibility only. The backend is the actual security boundary. */
   hasPermission: (permission: Permission) => boolean;
 }
 
@@ -28,7 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     wasSignedIn.current = user !== null;
   }, [user]);
 
-  // Restore the session from a stored token.
   useEffect(() => {
     if (!tokenStorage.get()) return;
     let active = true;
@@ -42,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Raised by the Axios interceptor when the API answers 401 (expired/revoked token).
   useEffect(() => {
     const onExpired = () => {
       if (wasSignedIn.current) toast.info('Your session has expired. Please sign in again.');
@@ -64,9 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
-    } catch {
-      /* the token is discarded locally either way */
-    }
+    } catch {}
     tokenStorage.clear();
     setUser(null);
   }, []);

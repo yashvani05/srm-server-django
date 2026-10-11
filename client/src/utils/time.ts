@@ -2,7 +2,6 @@ const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-/** "just now", "5m ago", "3h ago", "2d ago", then a plain date for anything older than a week. */
 export function timeAgo(iso: string, now = Date.now()): string {
   const diff = Math.max(0, now - new Date(iso).getTime());
   if (diff < MINUTE) return 'just now';
@@ -12,7 +11,6 @@ export function timeAgo(iso: string, now = Date.now()): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-/** Compact elapsed time, e.g. "45m", "30h", "3d 4h". */
 export function elapsed(iso: string, now = Date.now()): string {
   const diff = Math.max(0, now - new Date(iso).getTime());
   if (diff < HOUR) return `${Math.max(1, Math.floor(diff / MINUTE))}m`;

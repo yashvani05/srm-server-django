@@ -7,18 +7,12 @@ export interface ActionMenuItem {
   label: string;
   icon: IconName;
   onSelect: () => void;
-  /** Renders the item in the destructive (red) style. */
   danger?: boolean;
 }
 
 const MENU_WIDTH = 160;
 const GAP = 4;
 
-/**
- * Kebab (three-dot) button that opens a labelled action menu.
- * The menu is portalled to <body> with fixed positioning so scrollable table wrappers can't clip it,
- * and it flips upward when there is no room below.
- */
 export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: string }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -30,7 +24,6 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
     if (returnFocus) buttonRef.current?.focus();
   }, []);
 
-  // Position under the button (right-aligned), flipping above if it would overflow the viewport.
   useLayoutEffect(() => {
     if (!open || !buttonRef.current || !menuRef.current) return;
     const b = buttonRef.current.getBoundingClientRect();

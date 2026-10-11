@@ -2,10 +2,6 @@ import { cn } from '../../utils/cn';
 import { ButtonLink } from '../ui/ButtonLink';
 import { Icon } from '../ui/Icon';
 
-/**
- * Primary "create" action. The plus sits in a small circle that fills in, grows and spins
- * on hover, and the whole button lifts slightly.
- */
 export function NewRequestButton({ className }: { className?: string }) {
   return (
     <ButtonLink to="/requests/new" className={cn('group shadow-sm transition-all hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm', className)}>

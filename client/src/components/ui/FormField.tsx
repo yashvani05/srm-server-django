@@ -6,7 +6,6 @@ interface FieldShellProps {
   label: string;
   error?: string;
   hint?: string;
-  /** Right-aligned helper such as a character count. */
   counter?: string;
   children: (props: { id: string; describedBy?: string; invalid: boolean; className: string }) => ReactNode;
 }
@@ -14,7 +13,6 @@ interface FieldShellProps {
 const controlClass =
   'block w-full rounded border bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:bg-gray-50 disabled:text-gray-500';
 
-/** Label + control + error/hint wiring (aria-describedby, aria-invalid) shared by all form controls. */
 function FieldShell({ label, error, hint, counter, children }: FieldShellProps) {
   const id = useId();
   const messageId = `${id}-msg`;
@@ -48,7 +46,6 @@ interface CommonProps {
   counter?: string;
 }
 
-/** Small icon shown inside the left edge of an input. */
 function LeadingIcon({ name }: { name: IconName }) {
   return (
     <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
@@ -102,7 +99,6 @@ export function SelectField({ label, error, hint, options, placeholder, ...rest 
   );
 }
 
-/** Password input with a show / hide toggle. */
 export function PasswordField({ label, error, hint, icon, ...rest }: CommonProps & Omit<ComponentProps<'input'>, 'type'> & { icon?: IconName }) {
   const [visible, setVisible] = useState(false);
   return (

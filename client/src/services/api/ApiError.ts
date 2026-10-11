@@ -1,6 +1,5 @@
 import type { FieldError } from '../../types/api';
 
-/** Normalised error thrown by every API call, so components never inspect Axios errors. */
 export class ApiError extends Error {
   constructor(
     message: string,

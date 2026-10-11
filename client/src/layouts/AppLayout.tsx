@@ -17,7 +17,6 @@ export function AppLayout() {
       <MobileNav />
 
       <main id="main" className="px-4 py-6 sm:px-6 sm:py-8 lg:pl-60">
-        {/* Keyed on the route so each page eases in. */}
         <div key={pathname} className="mx-auto max-w-6xl animate-fade-in lg:px-8">
           <Outlet />
         </div>

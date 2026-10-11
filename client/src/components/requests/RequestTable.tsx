@@ -13,14 +13,12 @@ import { OverdueBadge } from './OverdueBadge';
 import { PriorityBadge } from './PriorityBadge';
 import { StatusBadge } from './StatusBadge';
 
-// Core-only table: paging and filtering are server-side, so no client row-model features are needed.
 const features = tableFeatures({});
 const column = createColumnHelper<typeof features, ServiceRequest>();
 
 interface RequestTableProps {
   items: ServiceRequest[];
   onDelete: (request: ServiceRequest) => void;
-  /** Dims the rows while a new page / filter result is loading. */
   isFetching?: boolean;
 }
 
@@ -87,7 +85,6 @@ export function RequestTable({ items, onDelete, isFetching }: RequestTableProps)
 
   return (
     <div className={cn('transition-opacity', isFetching && 'opacity-60')} aria-busy={isFetching || undefined}>
-      {/* md+: table */}
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
@@ -119,7 +116,6 @@ export function RequestTable({ items, onDelete, isFetching }: RequestTableProps)
         </table>
       </div>
 
-      {/* below md: cards fed by the same row model */}
       <ul className="divide-y divide-gray-100 md:hidden">
         {rows.map((row) => {
           const r = row.original;

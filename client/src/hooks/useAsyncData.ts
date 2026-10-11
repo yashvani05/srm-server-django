@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ApiError } from '../services/api/ApiError';
 
-/** Keeps a first-load skeleton on screen long enough to read as intentional rather than flicker. */
 const MIN_FIRST_LOAD_MS = 450;
 
 interface State<T> {
@@ -10,10 +9,6 @@ interface State<T> {
   isFetching: boolean;
 }
 
-/**
- * Fetches on mount and whenever `deps` change; aborts the in-flight request when superseded.
- * `isLoading` is true only until the first result, so a refetch (e.g. new filter) keeps the old data on screen.
- */
 export function useAsyncData<T>(fetcher: (signal: AbortSignal) => Promise<T>, deps: readonly unknown[]) {
   const [state, setState] = useState<State<T>>({ data: null, error: null, isFetching: true });
   const [reloadKey, setReloadKey] = useState(0);
@@ -38,8 +33,6 @@ export function useAsyncData<T>(fetcher: (signal: AbortSignal) => Promise<T>, de
       });
 
     return () => controller.abort();
-    // `fetcher` is intentionally excluded: callers describe its inputs through `deps`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, reloadKey]);
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);

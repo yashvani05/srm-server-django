@@ -1,6 +1,5 @@
 import { Skeleton } from '../ui/Skeleton';
 
-/** Placeholder with the shape of the app, shown while the stored session is being validated. */
 export function AppShellSkeleton() {
   return (
     <div className="min-h-screen" role="status" aria-label="Loading application">

@@ -19,7 +19,6 @@ interface RequestFormProps {
   submitLabel: string;
   loadingLabel: string;
   isSubmitting: boolean;
-  /** Where Cancel goes only when there is no previous page (e.g. the form was opened directly). */
   cancelTo: string;
   onSubmit: (values: RequestFormValues) => Promise<ActionResult<unknown>>;
 }
@@ -33,7 +32,7 @@ export function RequestForm({ defaultValues, submitLabel, loadingLabel, isSubmit
     formState: { errors },
   } = useForm<RequestFormValues>({
     resolver: joiResolver(requestFormSchema),
-    mode: 'onTouched', // validate a field once it has been visited, then live
+    mode: 'onTouched',
     defaultValues: { title: '', description: '', category: undefined, priority: 'MEDIUM', ...defaultValues },
   });
 
@@ -43,7 +42,6 @@ export function RequestForm({ defaultValues, submitLabel, loadingLabel, isSubmit
 
   const submit = handleSubmit(async (values) => {
     const result = await onSubmit(values);
-    // Surface server-side validation messages next to the matching field.
     if (result.error instanceof ApiError) {
       result.error.errors.forEach((e) => {
         if (e.field && FORM_FIELDS.includes(e.field as keyof RequestFormValues)) {

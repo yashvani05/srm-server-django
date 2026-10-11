@@ -12,7 +12,6 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-/** Destructive-action confirmation built on the native <dialog> (focus trap, Esc, backdrop included). */
 export function ConfirmDialog({ open, title, description, confirmLabel, loadingLabel, loading, onConfirm, onCancel }: ConfirmDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
